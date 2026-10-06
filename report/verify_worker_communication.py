@@ -10,7 +10,9 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from threading import Barrier
 from typing import Any
+from datetime import datetime
 
+from langchain_core.exceptions import ModelRateLimitError
 from langchain_core.messages import AIMessage, ToolMessage
 from langchain_core.outputs import ChatGeneration, ChatResult
 
@@ -56,6 +58,8 @@ class CommunicationModel(ScriptedChatModel):
                 raise TimeoutError("PRIVATE-EXCEPTION-MARKER")
             if role == "explorer" and not outputs and self.failure == "runtime":
                 raise RuntimeError("upstream unavailable")
+            if role == "explorer" and not outputs and self.failure == "provider":
+                raise ModelRateLimitError("Offline provider quota error")
             if role == "explorer" and not outputs and self.failure == "reported":
                 return ChatResult(generations=[ChatGeneration(message=AIMessage(content=json.dumps({
                     "status": "error", "result": None, "files_changed": [], "checks": [],
@@ -115,26 +119,43 @@ class RecordModel(ScriptedChatModel):
         if str(messages[0].content).startswith("You investigate"):
             if self.failure == "timeout":
                 raise TimeoutError("PRIVATE-EXCEPTION-MARKER")
-            reply = AIMessage(content=json.dumps({"status": "error", "errors": ["Unresolved check"]}))
+            if self.failure == "provider":
+                raise ModelRateLimitError("Offline provider quota error")
+            reply = AIMessage(content=json.dumps({"status": "success" if self.failure == "success" else "error", "errors": [] if self.failure == "success" else ["Unresolved check"]}))
         elif not any(isinstance(m, ToolMessage) for m in messages):
-            reply = AIMessage(content="", tool_calls=[{"name": "task", "args": {"subagent_type": "explorer", "description": "Offline verification of error recording; report failure."}, "id": "record-worker-error"}])
+            reply = AIMessage(content="", tool_calls=[{"name": "task", "args": {"subagent_type": "explorer", "description": "Offline verification of result recording; return your status."}, "id": "record-worker-error"}])
         else:
-            reply = AIMessage(content="Worker failure detected")
+            reply = AIMessage(content="Worker returned its status")
         return ChatResult(generations=[ChatGeneration(message=reply)])
 
 
 def verify_error_record(failure):
     with TemporaryDirectory(prefix="worker-record-check-") as folder:
         record = run_task("data-learn", "subagents", results_dir=folder, model=RecordModel(failure=failure))
-        assert record["error"] and "explorer" in record["error"]
-        assert record["final_message"] == ""
-        assert len(record["worker_errors"]) == 1
-        assert record["worker_errors"][0]["tool_call_id"] == "record-worker-error"
-        assert record["worker_errors"][0]["report"]["status"] == "error"
+        if failure in {"timeout", "reported"}:
+            assert record["error"] and "explorer" in record["error"]
+            assert record["final_message"] == ""
+            assert len(record["worker_errors"]) == 1
+            assert record["worker_errors"][0]["tool_call_id"] == "record-worker-error"
+            assert record["worker_errors"][0]["report"]["status"] == "error"
+        else:
+            assert record["worker_errors"] == []
+            assert (record["error"] is None) == (failure == "success")
+            if failure == "provider":
+                assert "ModelRateLimitError" in record["error"]
+        communication = record["communications"]
+        assert len(communication) == (1 if failure == "provider" else 2)
+        assert communication[0]["type"] == "task"
+        assert communication[0]["from"] == "coordinator" and communication[0]["to"] == "explorer"
+        assert all(m["id"] == "record-worker-error" and datetime.fromisoformat(m["timestamp"]).utcoffset().total_seconds() == 0 for m in communication)
+        if failure != "provider":
+            assert communication[1]["type"] == "result"
+            assert communication[1]["from"] == "explorer" and communication[1]["to"] == "coordinator"
         saved = json.loads((Path(folder) / "subagents/data-learn/run.json").read_text())
         assert saved["worker_errors"] == record["worker_errors"]
+        assert saved["communications"] == communication
         assert "PRIVATE-EXCEPTION-MARKER" not in json.dumps(saved)
-    print(f"PASS runner {failure}: worker error preserved, run flagged, record stored only in temporary verification directory")
+    print(f"PASS runner {failure}: correlated communication log and honest error state saved in temporary directory")
 
 
 if __name__ == "__main__":
@@ -147,13 +168,14 @@ if __name__ == "__main__":
     verify_flow(True, "timeout")
     verify_flow(False, "reported")
     verify_flow(True, "reported")
-    for use_async in (False, True):
-        try:
-            verify_flow(use_async, "runtime")
-        except RuntimeError as exc:
-            assert "upstream unavailable" in str(exc)
-            print(f"PASS {'async' if use_async else 'sync'}: unexpected/upstream errors propagate")
-        else:
-            raise AssertionError("Unexpected/upstream error was masked")
-    verify_error_record("timeout")
-    verify_error_record("reported")
+    for failure in ("runtime", "provider"):
+        for use_async in (False, True):
+            try:
+                verify_flow(use_async, failure)
+            except (RuntimeError, ModelRateLimitError) as exc:
+                assert isinstance(exc, ModelRateLimitError if failure == "provider" else RuntimeError)
+                print(f"PASS {'async' if use_async else 'sync'} {failure}: error propagates")
+            else:
+                raise AssertionError("Unexpected/provider error was masked")
+    for failure in ("timeout", "reported", "success", "provider"):
+        verify_error_record(failure)

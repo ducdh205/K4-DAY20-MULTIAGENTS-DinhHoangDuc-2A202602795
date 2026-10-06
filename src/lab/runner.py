@@ -82,9 +82,12 @@ def run_task(task_id: str, condition: str, results_dir="results", model=None, re
         "role": task.role,
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "error": None,
+        "communications": [],
     }
     usage = UsageMetadataCallbackHandler()
     messages = []
+    observed_requests = {}
+    observed_replies = set()
     started = time.perf_counter()
 
     with tempfile.TemporaryDirectory(prefix="lab-") as tmp:
@@ -110,6 +113,32 @@ def run_task(task_id: str, condition: str, results_dir="results", model=None, re
                 stream_mode="values",
             ):
                 messages = state.get("messages", messages)
+                # Log each handoff once, even though values streams repeat history.
+                # Timestamps are when the runner observes an event, in UTC.
+                for message in messages:
+                    if isinstance(message, AIMessage):
+                        for call in message.tool_calls:
+                            if call["name"] != "task" or call["id"] in observed_requests:
+                                continue
+                            worker = call["args"].get("subagent_type")
+                            observed_requests[call["id"]] = worker
+                            record["communications"].append({
+                                "type": "task", "id": call["id"],
+                                "from": "coordinator", "to": worker,
+                                "timestamp": datetime.now(timezone.utc).isoformat(),
+                                "content": call["args"].get("description", ""),
+                            })
+                    elif isinstance(message, ToolMessage):
+                        identity = message.tool_call_id
+                        if identity not in observed_requests or identity in observed_replies:
+                            continue
+                        observed_replies.add(identity)
+                        record["communications"].append({
+                            "type": "result", "id": identity,
+                            "from": observed_requests[identity], "to": "coordinator",
+                            "timestamp": datetime.now(timezone.utc).isoformat(),
+                            "content": message.content, "tool_status": message.status,
+                        })
         except Exception as exc:
             record["error"] = f"{type(exc).__name__}: {exc}"
 
