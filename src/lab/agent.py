@@ -3,6 +3,7 @@
 Pseudo-code: guides/pseudocode/01_agent.md
 Kiểm tra:    pytest tests/test_02_agent.py
 """
+import json
 import os
 import sys
 from pathlib import Path
@@ -11,6 +12,7 @@ from deepagents import create_deep_agent
 from deepagents.backends import LocalShellBackend
 from deepagents.middleware.filesystem import FilesystemMiddleware
 from deepagents.middleware.summarization import SummarizationMiddleware
+from langchain.agents.middleware import ToolErrorMiddleware
 
 from .model import make_model
 from .subagents import get_subagents
@@ -122,11 +124,29 @@ def build_agent(sandbox: Path, mode: str = "single", use_skills: bool = False, m
             {
                 **sub,
                 "system_prompt": sub["system_prompt"] + " " + PATHS_NOTE,
-                **({"middleware": kwargs["middleware"]} if context_limit else {}),
+                **({"middleware": list(kwargs["middleware"])} if context_limit else {}),
             }
             for sub in get_subagents()
         ]
         prompt += SUBAGENTS_NOTE
+
+        def worker_error(exc, request):
+            # Expected worker failures return to the coordinator with their
+            # original call ID. Provider and unexpected errors still propagate.
+            if not isinstance(exc, (ValueError, FileNotFoundError, PermissionError, TimeoutError)):
+                return None
+            return json.dumps({
+                "status": "error",
+                "worker": request.tool_call["args"].get("subagent_type"),
+                "result": None,
+                "files_changed": [],
+                "checks": [],
+                "errors": [{"type": type(exc).__name__, "message": "Worker could not complete; verify the delegated inputs and files."}],
+            })
+
+        kwargs.setdefault("middleware", []).append(
+            ToolErrorMiddleware(on_error=worker_error, tools=["task"]),
+        )
     if use_skills:
         kwargs["skills"] = ["/skills/"]
         prompt += SKILLS_NOTE

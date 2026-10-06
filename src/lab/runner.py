@@ -129,6 +129,30 @@ def run_task(task_id: str, condition: str, results_dir="results", model=None, re
         ]
         record["tool_calls"] = len(calls)
         record["subagent_calls"] = sum(call["name"] == "task" for call in calls)
+        task_workers = {
+            call["id"]: call["args"].get("subagent_type")
+            for call in calls if call["name"] == "task"
+        }
+        worker_errors = []
+        for message in messages:
+            if not isinstance(message, ToolMessage) or message.tool_call_id not in task_workers:
+                continue
+            try:
+                report = json.loads(message.content)
+            except (TypeError, json.JSONDecodeError):
+                report = None
+            if message.status == "error" or (isinstance(report, dict) and report.get("status") == "error"):
+                worker_errors.append({
+                    "tool_call_id": message.tool_call_id,
+                    "worker": task_workers[message.tool_call_id],
+                    "report": report if report is not None else message.content,
+                })
+        record["worker_errors"] = worker_errors
+        if worker_errors:
+            record["error"] = "; ".join(filter(None, (
+                record["error"],
+                "Worker errors: " + ", ".join(f"{item['worker']} [{item['tool_call_id']}]" for item in worker_errors),
+            )))
         skills_read = set()
         for call in calls:
             if call["name"] == "read_file":
