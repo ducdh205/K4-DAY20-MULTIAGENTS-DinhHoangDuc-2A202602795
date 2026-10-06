@@ -63,6 +63,7 @@ def make_backend(sandbox: Path):
             "PYTHONDONTWRITEBYTECODE": "1",
         },
         timeout=120,
+        max_output_bytes=10_000,
     )
 
 
