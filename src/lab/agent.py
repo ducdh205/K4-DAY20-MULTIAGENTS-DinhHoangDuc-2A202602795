@@ -9,6 +9,7 @@ from pathlib import Path
 
 from deepagents import create_deep_agent
 from deepagents.backends import LocalShellBackend
+from deepagents.middleware.filesystem import FilesystemMiddleware
 from deepagents.middleware.summarization import SummarizationMiddleware
 
 from .model import make_model
@@ -94,13 +95,18 @@ def build_agent(sandbox: Path, mode: str = "single", use_skills: bool = False, m
     if context_limit:
         # Compact completed tool exchanges before the provider's request budget
         # is reached; the complete history remains available in the backend.
-        kwargs["middleware"] = [SummarizationMiddleware(
-            model=model.model_copy(update={"max_tokens": 768}),
-            backend=backend,
-            trigger=("fraction", 0.5),
-            keep=("messages", 1),
-            trim_tokens_to_summarize=None,
-        )]
+        kwargs["middleware"] = [
+            # Paginated reads disclose the next offset; the original file is
+            # intact and remains fully accessible through reads or Python.
+            FilesystemMiddleware(backend=backend, tool_token_limit_before_evict=500),
+            SummarizationMiddleware(
+                model=model.model_copy(update={"max_tokens": 768}),
+                backend=backend,
+                trigger=("fraction", 0.5),
+                keep=("messages", 1),
+                trim_tokens_to_summarize=None,
+            ),
+        ]
     prompt = BASE_PROMPT
     if mode == "subagents":
         kwargs["subagents"] = [
