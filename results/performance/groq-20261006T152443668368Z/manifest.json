@@ -1,0 +1,21 @@
+{
+  "kind": "real-provider-learning",
+  "planned_runs": 17,
+  "runs": [
+    {
+      "iteration": 1,
+      "condition": "baseline",
+      "task": "code-learn",
+      "seconds": 180.4,
+      "score": 0.0,
+      "tokens": {
+        "input": 10017,
+        "output": 231,
+        "total": 10248
+      },
+      "error": "OpenAIRateLimitError: Error code: 429 - {'error': {'message': 'Rate limit reached for model `qwen/qwen3.8-27b` in organization `org_01m4439hnse2qsy17zdqt4xvjy` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 199641, Requested 4707. Please try again in 31m18.336s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}"
+    }
+  ],
+  "stopped": "Provider/infrastructure failure; inspect the saved run.json before resuming.",
+  "pending_runs": 16
+}

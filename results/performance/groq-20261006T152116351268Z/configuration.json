@@ -1,0 +1,12 @@
+{
+  "source_revision": "9b49902666192d5ca8d16bb3e2d0138086a32c36",
+  "model": "qwen/qwen3.8-27b",
+  "base_url": "https://api.groq.com/openai/v1",
+  "temperature": "0",
+  "max_input_tokens": "7000",
+  "max_output_tokens": "900",
+  "recursion_limit": 20,
+  "sdk_retries": 0,
+  "output_limit": 10000,
+  "repetitions": 3
+}

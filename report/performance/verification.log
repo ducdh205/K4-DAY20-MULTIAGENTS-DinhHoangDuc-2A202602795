@@ -1,0 +1,62 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+rootdir: /mnt/e/AIVin/K4-DAY20-MULTIAGENTS-DinhHoangDuc-2A202602795
+configfile: pyproject.toml
+plugins: anyio-4.15.1, langsmith-0.14.4
+collected 32 items
+
+tests/test_01_provided.py ...............                                [ 46%]
+tests/test_02_agent.py .........                                         [ 75%]
+tests/test_03_runner.py ......                                           [ 93%]
+tests/test_04_curator.py ..                                              [100%]
+
+============================= slowest 10 durations =============================
+16.14s call     tests/test_01_provided.py::test_untouched_workspace_does_not_score_full
+0.85s call     tests/test_01_provided.py::test_make_model_supports_an_openai_compatible_endpoint
+0.71s call     tests/test_01_provided.py::test_validate_skill_accepts_good_and_rejects_bad
+0.69s call     tests/test_02_agent.py::test_file_tools_and_shell_share_relative_paths
+0.35s call     tests/test_04_curator.py::test_curator_writes_only_valid_skills_and_never_leaks
+0.29s call     tests/test_03_runner.py::test_skill_reads_and_subagent_calls_are_counted
+0.22s call     tests/test_01_provided.py::test_feedback_only_on_failed_checks_of_learning_tasks
+0.21s call     tests/test_02_agent.py::test_subagents_mode_adds_subagents_and_delegation_note
+0.20s call     tests/test_03_runner.py::test_modifying_skills_is_flagged
+0.20s call     tests/test_03_runner.py::test_task_workspace_in_repo_is_never_modified
+======================== 32 passed in 65.90s (0:01:05) =========================
+Skipping errored run: errored
+No failed checks from usable learning runs; no model call.
+PASS curator: infrastructure failure does not trigger a model call
+Skipping malformed run: malformed
+Skipping duplicate or invalid skill block.
+PASS curator: malformed input skipped, trace bounded, eval trace excluded, duplicates rejected
+Skipping malformed run: malformed
+Skipping skill path outside destination or symlink target.
+PASS curator: existing symlink cannot redirect a skill outside output
+PASS curator: zero and negative skill limits never consume model calls
+PASS sync success: correlated replies, real tools, isolated context
+PASS async success: correlated replies, real tools, isolated context
+PASS sync timeout: correlated replies, real tools, isolated context
+PASS async timeout: correlated replies, real tools, isolated context
+PASS sync reported: correlated replies, real tools, isolated context
+PASS async reported: correlated replies, real tools, isolated context
+PASS sync runtime: error propagates
+PASS async runtime: error propagates
+PASS sync provider: error propagates
+PASS async provider: error propagates
+PASS runner timeout: correlated communication log and honest error state saved in temporary directory
+PASS runner reported: correlated communication log and honest error state saved in temporary directory
+PASS runner success: correlated communication log and honest error state saved in temporary directory
+PASS runner provider: correlated communication log and honest error state saved in temporary directory
+PASS backend environment: parent credential marker not inherited
+PASS backend files: UTF-8 create/edit/read and shell use the same path
+PASS backend invalid input: missing file, edit mismatch, empty command
+PASS backend file paths: traversal and symlink escape rejected
+PASS backend failures: stdout/stderr and nonzero exit preserved
+PASS backend timeout: real command exceeds 1 second and returns exit 124
+PASS backend output: 20,000-character result truncated at 10,000
+PASS backend boundary: shell can read our outside fixture; no OS isolation claimed
+PASS collaboration sync success: real tools; independent checks 3/3
+PASS collaboration async success: real tools; independent checks 3/3
+PASS runner tools success: 8 correlated tool events incl. worker tools, 6 handoff events, 0 API tokens
+PASS collaboration sync corrupt: real tools; independent checks 2/3
+PASS collaboration async corrupt: real tools; independent checks 2/3
+PASS runner tools corrupt: 8 correlated tool events incl. worker tools, 6 handoff events, 0 API tokens

@@ -1,0 +1,59 @@
+{
+  "task": "tools-fixture-learn",
+  "condition": "baseline",
+  "role": "learn",
+  "timestamp": "2026-10-06T15:19:25.632164+00:00",
+  "error": null,
+  "communications": [],
+  "tool_executions": [
+    {
+      "id": "01a111cc-52e0-7172-8517-eac5336ca3fb",
+      "parent_id": "01a111cc-52df-79f3-a0a9-cbba61654622",
+      "name": "execute",
+      "input": "{'command': 'python workspace/report.py'}",
+      "timestamp": "2026-10-06T15:19:25.664902+00:00",
+      "status": "completed",
+      "seconds": 0.075099,
+      "output": "{\"total_cents\": 1375, \"valid_rows\": 3, \"rejected_rows\": 2, \"sql_total_cents\": 1375, \"readonly\": true}\n\n[Command succeeded with exit code 0]"
+    }
+  ],
+  "model": "OfflineModel",
+  "temperature": null,
+  "max_input_tokens": null,
+  "max_output_tokens": null,
+  "recursion_limit": 60,
+  "seconds": 0.1,
+  "skills_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "skills_modified": false,
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "total": 0
+  },
+  "main_model_usage": [],
+  "tool_calls": 1,
+  "subagent_calls": 0,
+  "worker_errors": [],
+  "skills_read": 0,
+  "final_message": "Fixture finished",
+  "score": 1.0,
+  "passed": 3,
+  "total": 3,
+  "checks": [
+    {
+      "name": "totals",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "rows_and_readonly",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "chart",
+      "passed": true,
+      "detail": ""
+    }
+  ]
+}

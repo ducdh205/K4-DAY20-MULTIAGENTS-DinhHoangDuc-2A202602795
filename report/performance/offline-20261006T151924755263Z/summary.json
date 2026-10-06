@@ -1,0 +1,959 @@
+{
+  "kind": "offline-harness-real-tools-scripted-model",
+  "api_calls": 0,
+  "source_revision": "9b49902666192d5ca8d16bb3e2d0138086a32c36",
+  "python": "3.12.3",
+  "percentile_method": "p50 median; p99 nearest rank",
+  "worker_utilization": null,
+  "worker_utilization_reason": "Tool durations do not identify complete worker busy intervals.",
+  "cases": {
+    "simple": {
+      "samples": [
+        {
+          "case": "simple",
+          "iteration": 1,
+          "seconds": 0.7785720479996598,
+          "success": true,
+          "score": 1.0,
+          "error": null,
+          "main_tool_calls": 1,
+          "tool_events": 1,
+          "delegation_seconds": 0
+        },
+        {
+          "case": "simple",
+          "iteration": 2,
+          "seconds": 0.22124474300017027,
+          "success": true,
+          "score": 1.0,
+          "error": null,
+          "main_tool_calls": 1,
+          "tool_events": 1,
+          "delegation_seconds": 0
+        },
+        {
+          "case": "simple",
+          "iteration": 3,
+          "seconds": 0.2225771370003713,
+          "success": true,
+          "score": 1.0,
+          "error": null,
+          "main_tool_calls": 1,
+          "tool_events": 1,
+          "delegation_seconds": 0
+        }
+      ],
+      "metrics": {
+        "requests": 3,
+        "successes": 3,
+        "error_rate": 0.0,
+        "min": 0.22124474300017027,
+        "max": 0.7785720479996598,
+        "avg": 0.4074646426667338,
+        "p50": 0.2225771370003713,
+        "p99_nearest_rank": 0.7785720479996598,
+        "elapsed_seconds": 1.2223939280002014,
+        "successful_requests_per_minute": 147.2520403422442,
+        "api_tokens": 0
+      }
+    },
+    "code": {
+      "samples": [
+        {
+          "case": "code",
+          "iteration": 1,
+          "seconds": 0.273496621999584,
+          "success": true,
+          "score": 1.0,
+          "error": null,
+          "main_tool_calls": 2,
+          "tool_events": 2,
+          "delegation_seconds": 0
+        },
+        {
+          "case": "code",
+          "iteration": 2,
+          "seconds": 0.22874967600000673,
+          "success": true,
+          "score": 1.0,
+          "error": null,
+          "main_tool_calls": 2,
+          "tool_events": 2,
+          "delegation_seconds": 0
+        },
+        {
+          "case": "code",
+          "iteration": 3,
+          "seconds": 0.167087206999895,
+          "success": true,
+          "score": 1.0,
+          "error": null,
+          "main_tool_calls": 2,
+          "tool_events": 2,
+          "delegation_seconds": 0
+        }
+      ],
+      "metrics": {
+        "requests": 3,
+        "successes": 3,
+        "error_rate": 0.0,
+        "min": 0.167087206999895,
+        "max": 0.273496621999584,
+        "avg": 0.2231111683331619,
+        "p50": 0.22874967600000673,
+        "p99_nearest_rank": 0.273496621999584,
+        "elapsed_seconds": 0.6693335049994857,
+        "successful_requests_per_minute": 268.9242338169494,
+        "api_tokens": 0
+      }
+    },
+    "complex": {
+      "samples": [
+        {
+          "case": "complex",
+          "iteration": 1,
+          "seconds": 0.5019977949996246,
+          "success": true,
+          "score": 1.0,
+          "error": null,
+          "main_tool_calls": 3,
+          "tool_events": 8,
+          "delegation_seconds": 0.251487
+        },
+        {
+          "case": "complex",
+          "iteration": 2,
+          "seconds": 0.3756878259991936,
+          "success": true,
+          "score": 1.0,
+          "error": null,
+          "main_tool_calls": 3,
+          "tool_events": 8,
+          "delegation_seconds": 0.221056
+        },
+        {
+          "case": "complex",
+          "iteration": 3,
+          "seconds": 0.3397540850000951,
+          "success": true,
+          "score": 1.0,
+          "error": null,
+          "main_tool_calls": 3,
+          "tool_events": 8,
+          "delegation_seconds": 0.204335
+        }
+      ],
+      "metrics": {
+        "requests": 3,
+        "successes": 3,
+        "error_rate": 0.0,
+        "min": 0.3397540850000951,
+        "max": 0.5019977949996246,
+        "avg": 0.4058132353329711,
+        "p50": 0.3756878259991936,
+        "p99_nearest_rank": 0.5019977949996246,
+        "elapsed_seconds": 1.2174397059989133,
+        "successful_requests_per_minute": 147.85126451277472,
+        "api_tokens": 0
+      }
+    }
+  },
+  "stress": {
+    "samples": [
+      {
+        "case": "complex-concurrent",
+        "request_id": 0,
+        "seconds": 2.0015234399998008,
+        "success": true,
+        "checks": {
+          "score": 1.0,
+          "passed": 3,
+          "total": 3,
+          "checks": [
+            {
+              "name": "totals",
+              "passed": true,
+              "detail": ""
+            },
+            {
+              "name": "rows_and_readonly",
+              "passed": true,
+              "detail": ""
+            },
+            {
+              "name": "chart",
+              "passed": true,
+              "detail": ""
+            }
+          ]
+        },
+        "answer": {
+          "total_cents": 1375,
+          "valid_rows": 3,
+          "rejected_rows": 2,
+          "sql_total_cents": 1375,
+          "readonly": true
+        },
+        "messages": [
+          {
+            "type": "human",
+            "content": "Offline independent fixture 0",
+            "tool_call_id": null
+          },
+          {
+            "type": "ai",
+            "content": "",
+            "tool_call_id": null
+          },
+          {
+            "type": "tool",
+            "content": "{\"status\": \"success\", \"result\": {\"total_cents\": 1375, \"valid_rows\": 3, \"rejected_rows\": 2, \"sql_total_cents\": 1375, \"readonly\": true}, \"files_changed\": [], \"checks\": [{\"check\": \"explorer\", \"passed\": true, \"evidence\": {\"total_cents\": 1375, \"valid_rows\": 3, \"rejected_rows\": 2, \"sql_total_cents\": 1375, \"readonly\": true}}], \"errors\": []}",
+            "tool_call_id": "coordinator-0"
+          },
+          {
+            "type": "ai",
+            "content": "",
+            "tool_call_id": null
+          },
+          {
+            "type": "tool",
+            "content": "{\"status\": \"success\", \"result\": {\"total_cents\": 1375, \"valid_rows\": 3, \"rejected_rows\": 2, \"sql_total_cents\": 1375, \"readonly\": true}, \"files_changed\": [\"workspace/report.py\", \"workspace/answer.json\", \"workspace/summary.svg\"], \"checks\": [{\"check\": \"implementer\", \"passed\": true, \"evidence\": {\"total_cents\": 1375, \"valid_rows\": 3, \"rejected_rows\": 2, \"sql_total_cents\": 1375, \"readonly\": true}}], \"errors\": []}",
+            "tool_call_id": "coordinator-1"
+          },
+          {
+            "type": "ai",
+            "content": "",
+            "tool_call_id": null
+          },
+          {
+            "type": "tool",
+            "content": "{\"status\": \"success\", \"result\": {\"score\": 1.0, \"passed\": 3, \"total\": 3, \"checks\": [{\"name\": \"totals\", \"passed\": true, \"detail\": \"\"}, {\"name\": \"rows_and_readonly\", \"passed\": true, \"detail\": \"\"}, {\"name\": \"chart\", \"passed\": true, \"detail\": \"\"}]}, \"files_changed\": [], \"checks\": [{\"check\": \"reviewer\", \"passed\": true, \"evidence\": {\"score\": 1.0, \"passed\": 3, \"total\": 3, \"checks\": [{\"name\": \"totals\", \"passed\": true, \"detail\": \"\"}, {\"name\": \"rows_and_readonly\", \"passed\": true, \"detail\": \"\"}, {\"name\": \"chart\", \"passed\": true, \"detail\": \"\"}]}}], \"errors\": []}",
+            "tool_call_id": "coordinator-2"
+          },
+          {
+            "type": "ai",
+            "content": "Synthetic collaboration completed; consult independent check results.",
+            "tool_call_id": null
+          }
+        ]
+      },
+      {
+        "case": "complex-concurrent",
+        "request_id": 1,
+        "seconds": 2.082615772000281,
+        "success": true,
+        "checks": {
+          "score": 1.0,
+          "passed": 3,
+          "total": 3,
+          "checks": [
+            {
+              "name": "totals",
+              "passed": true,
+              "detail": ""
+            },
+            {
+              "name": "rows_and_readonly",
+              "passed": true,
+              "detail": ""
+            },
+            {
+              "name": "chart",
+              "passed": true,
+              "detail": ""
+            }
+          ]
+        },
+        "answer": {
+          "total_cents": 1375,
+          "valid_rows": 3,
+          "rejected_rows": 2,
+          "sql_total_cents": 1375,
+          "readonly": true
+        },
+        "messages": [
+          {
+            "type": "human",
+            "content": "Offline independent fixture 1",
+            "tool_call_id": null
+          },
+          {
+            "type": "ai",
+            "content": "",
+            "tool_call_id": null
+          },
+          {
+            "type": "tool",
+            "content": "{\"status\": \"success\", \"result\": {\"total_cents\": 1375, \"valid_rows\": 3, \"rejected_rows\": 2, \"sql_total_cents\": 1375, \"readonly\": true}, \"files_changed\": [], \"checks\": [{\"check\": \"explorer\", \"passed\": true, \"evidence\": {\"total_cents\": 1375, \"valid_rows\": 3, \"rejected_rows\": 2, \"sql_total_cents\": 1375, \"readonly\": true}}], \"errors\": []}",
+            "tool_call_id": "coordinator-0"
+          },
+          {
+            "type": "ai",
+            "content": "",
+            "tool_call_id": null
+          },
+          {
+            "type": "tool",
+            "content": "{\"status\": \"success\", \"result\": {\"total_cents\": 1375, \"valid_rows\": 3, \"rejected_rows\": 2, \"sql_total_cents\": 1375, \"readonly\": true}, \"files_changed\": [\"workspace/report.py\", \"workspace/answer.json\", \"workspace/summary.svg\"], \"checks\": [{\"check\": \"implementer\", \"passed\": true, \"evidence\": {\"total_cents\": 1375, \"valid_rows\": 3, \"rejected_rows\": 2, \"sql_total_cents\": 1375, \"readonly\": true}}], \"errors\": []}",
+            "tool_call_id": "coordinator-1"
+          },
+          {
+            "type": "ai",
+            "content": "",
+            "tool_call_id": null
+          },
+          {
+            "type": "tool",
+            "content": "{\"status\": \"success\", \"result\": {\"score\": 1.0, \"passed\": 3, \"total\": 3, \"checks\": [{\"name\": \"totals\", \"passed\": true, \"detail\": \"\"}, {\"name\": \"rows_and_readonly\", \"passed\": true, \"detail\": \"\"}, {\"name\": \"chart\", \"passed\": true, \"detail\": \"\"}]}, \"files_changed\": [], \"checks\": [{\"check\": \"reviewer\", \"passed\": true, \"evidence\": {\"score\": 1.0, \"passed\": 3, \"total\": 3, \"checks\": [{\"name\": \"totals\", \"passed\": true, \"detail\": \"\"}, {\"name\": \"rows_and_readonly\", \"passed\": true, \"detail\": \"\"}, {\"name\": \"chart\", \"passed\": true, \"detail\": \"\"}]}}], \"errors\": []}",
+            "tool_call_id": "coordinator-2"
+          },
+          {
+            "type": "ai",
+            "content": "Synthetic collaboration completed; consult independent check results.",
+            "tool_call_id": null
+          }
+        ]
+      },
+      {
+        "case": "complex-concurrent",
+        "request_id": 2,
+        "seconds": 2.0519232209999245,
+        "success": true,
+        "checks": {
+          "score": 1.0,
+          "passed": 3,
+          "total": 3,
+          "checks": [
+            {
+              "name": "totals",
+              "passed": true,
+              "detail": ""
+            },
+            {
+              "name": "rows_and_readonly",
+              "passed": true,
+              "detail": ""
+            },
+            {
+              "name": "chart",
+              "passed": true,
+              "detail": ""
+            }
+          ]
+        },
+        "answer": {
+          "total_cents": 1375,
+          "valid_rows": 3,
+          "rejected_rows": 2,
+          "sql_total_cents": 1375,
+          "readonly": true
+        },
+        "messages": [
+          {
+            "type": "human",
+            "content": "Offline independent fixture 2",
+            "tool_call_id": null
+          },
+          {
+            "type": "ai",
+            "content": "",
+            "tool_call_id": null
+          },
+          {
+            "type": "tool",
+            "content": "{\"status\": \"success\", \"result\": {\"total_cents\": 1375, \"valid_rows\": 3, \"rejected_rows\": 2, \"sql_total_cents\": 1375, \"readonly\": true}, \"files_changed\": [], \"checks\": [{\"check\": \"explorer\", \"passed\": true, \"evidence\": {\"total_cents\": 1375, \"valid_rows\": 3, \"rejected_rows\": 2, \"sql_total_cents\": 1375, \"readonly\": true}}], \"errors\": []}",
+            "tool_call_id": "coordinator-0"
+          },
+          {
+            "type": "ai",
+            "content": "",
+            "tool_call_id": null
+          },
+          {
+            "type": "tool",
+            "content": "{\"status\": \"success\", \"result\": {\"total_cents\": 1375, \"valid_rows\": 3, \"rejected_rows\": 2, \"sql_total_cents\": 1375, \"readonly\": true}, \"files_changed\": [\"workspace/report.py\", \"workspace/answer.json\", \"workspace/summary.svg\"], \"checks\": [{\"check\": \"implementer\", \"passed\": true, \"evidence\": {\"total_cents\": 1375, \"valid_rows\": 3, \"rejected_rows\": 2, \"sql_total_cents\": 1375, \"readonly\": true}}], \"errors\": []}",
+            "tool_call_id": "coordinator-1"
+          },
+          {
+            "type": "ai",
+            "content": "",
+            "tool_call_id": null
+          },
+          {
+            "type": "tool",
+            "content": "{\"status\": \"success\", \"result\": {\"score\": 1.0, \"passed\": 3, \"total\": 3, \"checks\": [{\"name\": \"totals\", \"passed\": true, \"detail\": \"\"}, {\"name\": \"rows_and_readonly\", \"passed\": true, \"detail\": \"\"}, {\"name\": \"chart\", \"passed\": true, \"detail\": \"\"}]}, \"files_changed\": [], \"checks\": [{\"check\": \"reviewer\", \"passed\": true, \"evidence\": {\"score\": 1.0, \"passed\": 3, \"total\": 3, \"checks\": [{\"name\": \"totals\", \"passed\": true, \"detail\": \"\"}, {\"name\": \"rows_and_readonly\", \"passed\": true, \"detail\": \"\"}, {\"name\": \"chart\", \"passed\": true, \"detail\": \"\"}]}}], \"errors\": []}",
+            "tool_call_id": "coordinator-2"
+          },
+          {
+            "type": "ai",
+            "content": "Synthetic collaboration completed; consult independent check results.",
+            "tool_call_id": null
+          }
+        ]
+      },
+      {
+        "case": "complex-concurrent",
+        "request_id": 3,
+        "seconds": 1.9682585909995396,
+        "success": true,
+        "checks": {
+          "score": 1.0,
+          "passed": 3,
+          "total": 3,
+          "checks": [
+            {
+              "name": "totals",
+              "passed": true,
+              "detail": ""
+            },
+            {
+              "name": "rows_and_readonly",
+              "passed": true,
+              "detail": ""
+            },
+            {
+              "name": "chart",
+              "passed": true,
+              "detail": ""
+            }
+          ]
+        },
+        "answer": {
+          "total_cents": 1375,
+          "valid_rows": 3,
+          "rejected_rows": 2,
+          "sql_total_cents": 1375,
+          "readonly": true
+        },
+        "messages": [
+          {
+            "type": "human",
+            "content": "Offline independent fixture 3",
+            "tool_call_id": null
+          },
+          {
+            "type": "ai",
+            "content": "",
+            "tool_call_id": null
+          },
+          {
+            "type": "tool",
+            "content": "{\"status\": \"success\", \"result\": {\"total_cents\": 1375, \"valid_rows\": 3, \"rejected_rows\": 2, \"sql_total_cents\": 1375, \"readonly\": true}, \"files_changed\": [], \"checks\": [{\"check\": \"explorer\", \"passed\": true, \"evidence\": {\"total_cents\": 1375, \"valid_rows\": 3, \"rejected_rows\": 2, \"sql_total_cents\": 1375, \"readonly\": true}}], \"errors\": []}",
+            "tool_call_id": "coordinator-0"
+          },
+          {
+            "type": "ai",
+            "content": "",
+            "tool_call_id": null
+          },
+          {
+            "type": "tool",
+            "content": "{\"status\": \"success\", \"result\": {\"total_cents\": 1375, \"valid_rows\": 3, \"rejected_rows\": 2, \"sql_total_cents\": 1375, \"readonly\": true}, \"files_changed\": [\"workspace/report.py\", \"workspace/answer.json\", \"workspace/summary.svg\"], \"checks\": [{\"check\": \"implementer\", \"passed\": true, \"evidence\": {\"total_cents\": 1375, \"valid_rows\": 3, \"rejected_rows\": 2, \"sql_total_cents\": 1375, \"readonly\": true}}], \"errors\": []}",
+            "tool_call_id": "coordinator-1"
+          },
+          {
+            "type": "ai",
+            "content": "",
+            "tool_call_id": null
+          },
+          {
+            "type": "tool",
+            "content": "{\"status\": \"success\", \"result\": {\"score\": 1.0, \"passed\": 3, \"total\": 3, \"checks\": [{\"name\": \"totals\", \"passed\": true, \"detail\": \"\"}, {\"name\": \"rows_and_readonly\", \"passed\": true, \"detail\": \"\"}, {\"name\": \"chart\", \"passed\": true, \"detail\": \"\"}]}, \"files_changed\": [], \"checks\": [{\"check\": \"reviewer\", \"passed\": true, \"evidence\": {\"score\": 1.0, \"passed\": 3, \"total\": 3, \"checks\": [{\"name\": \"totals\", \"passed\": true, \"detail\": \"\"}, {\"name\": \"rows_and_readonly\", \"passed\": true, \"detail\": \"\"}, {\"name\": \"chart\", \"passed\": true, \"detail\": \"\"}]}}], \"errors\": []}",
+            "tool_call_id": "coordinator-2"
+          },
+          {
+            "type": "ai",
+            "content": "Synthetic collaboration completed; consult independent check results.",
+            "tool_call_id": null
+          }
+        ]
+      },
+      {
+        "case": "complex-concurrent",
+        "request_id": 4,
+        "seconds": 1.897671901000649,
+        "success": true,
+        "checks": {
+          "score": 1.0,
+          "passed": 3,
+          "total": 3,
+          "checks": [
+            {
+              "name": "totals",
+              "passed": true,
+              "detail": ""
+            },
+            {
+              "name": "rows_and_readonly",
+              "passed": true,
+              "detail": ""
+            },
+            {
+              "name": "chart",
+              "passed": true,
+              "detail": ""
+            }
+          ]
+        },
+        "answer": {
+          "total_cents": 1375,
+          "valid_rows": 3,
+          "rejected_rows": 2,
+          "sql_total_cents": 1375,
+          "readonly": true
+        },
+        "messages": [
+          {
+            "type": "human",
+            "content": "Offline independent fixture 4",
+            "tool_call_id": null
+          },
+          {
+            "type": "ai",
+            "content": "",
+            "tool_call_id": null
+          },
+          {
+            "type": "tool",
+            "content": "{\"status\": \"success\", \"result\": {\"total_cents\": 1375, \"valid_rows\": 3, \"rejected_rows\": 2, \"sql_total_cents\": 1375, \"readonly\": true}, \"files_changed\": [], \"checks\": [{\"check\": \"explorer\", \"passed\": true, \"evidence\": {\"total_cents\": 1375, \"valid_rows\": 3, \"rejected_rows\": 2, \"sql_total_cents\": 1375, \"readonly\": true}}], \"errors\": []}",
+            "tool_call_id": "coordinator-0"
+          },
+          {
+            "type": "ai",
+            "content": "",
+            "tool_call_id": null
+          },
+          {
+            "type": "tool",
+            "content": "{\"status\": \"success\", \"result\": {\"total_cents\": 1375, \"valid_rows\": 3, \"rejected_rows\": 2, \"sql_total_cents\": 1375, \"readonly\": true}, \"files_changed\": [\"workspace/report.py\", \"workspace/answer.json\", \"workspace/summary.svg\"], \"checks\": [{\"check\": \"implementer\", \"passed\": true, \"evidence\": {\"total_cents\": 1375, \"valid_rows\": 3, \"rejected_rows\": 2, \"sql_total_cents\": 1375, \"readonly\": true}}], \"errors\": []}",
+            "tool_call_id": "coordinator-1"
+          },
+          {
+            "type": "ai",
+            "content": "",
+            "tool_call_id": null
+          },
+          {
+            "type": "tool",
+            "content": "{\"status\": \"success\", \"result\": {\"score\": 1.0, \"passed\": 3, \"total\": 3, \"checks\": [{\"name\": \"totals\", \"passed\": true, \"detail\": \"\"}, {\"name\": \"rows_and_readonly\", \"passed\": true, \"detail\": \"\"}, {\"name\": \"chart\", \"passed\": true, \"detail\": \"\"}]}, \"files_changed\": [], \"checks\": [{\"check\": \"reviewer\", \"passed\": true, \"evidence\": {\"score\": 1.0, \"passed\": 3, \"total\": 3, \"checks\": [{\"name\": \"totals\", \"passed\": true, \"detail\": \"\"}, {\"name\": \"rows_and_readonly\", \"passed\": true, \"detail\": \"\"}, {\"name\": \"chart\", \"passed\": true, \"detail\": \"\"}]}}], \"errors\": []}",
+            "tool_call_id": "coordinator-2"
+          },
+          {
+            "type": "ai",
+            "content": "Synthetic collaboration completed; consult independent check results.",
+            "tool_call_id": null
+          }
+        ]
+      },
+      {
+        "case": "complex-concurrent",
+        "request_id": 5,
+        "seconds": 1.8080971049994332,
+        "success": true,
+        "checks": {
+          "score": 1.0,
+          "passed": 3,
+          "total": 3,
+          "checks": [
+            {
+              "name": "totals",
+              "passed": true,
+              "detail": ""
+            },
+            {
+              "name": "rows_and_readonly",
+              "passed": true,
+              "detail": ""
+            },
+            {
+              "name": "chart",
+              "passed": true,
+              "detail": ""
+            }
+          ]
+        },
+        "answer": {
+          "total_cents": 1375,
+          "valid_rows": 3,
+          "rejected_rows": 2,
+          "sql_total_cents": 1375,
+          "readonly": true
+        },
+        "messages": [
+          {
+            "type": "human",
+            "content": "Offline independent fixture 5",
+            "tool_call_id": null
+          },
+          {
+            "type": "ai",
+            "content": "",
+            "tool_call_id": null
+          },
+          {
+            "type": "tool",
+            "content": "{\"status\": \"success\", \"result\": {\"total_cents\": 1375, \"valid_rows\": 3, \"rejected_rows\": 2, \"sql_total_cents\": 1375, \"readonly\": true}, \"files_changed\": [], \"checks\": [{\"check\": \"explorer\", \"passed\": true, \"evidence\": {\"total_cents\": 1375, \"valid_rows\": 3, \"rejected_rows\": 2, \"sql_total_cents\": 1375, \"readonly\": true}}], \"errors\": []}",
+            "tool_call_id": "coordinator-0"
+          },
+          {
+            "type": "ai",
+            "content": "",
+            "tool_call_id": null
+          },
+          {
+            "type": "tool",
+            "content": "{\"status\": \"success\", \"result\": {\"total_cents\": 1375, \"valid_rows\": 3, \"rejected_rows\": 2, \"sql_total_cents\": 1375, \"readonly\": true}, \"files_changed\": [\"workspace/report.py\", \"workspace/answer.json\", \"workspace/summary.svg\"], \"checks\": [{\"check\": \"implementer\", \"passed\": true, \"evidence\": {\"total_cents\": 1375, \"valid_rows\": 3, \"rejected_rows\": 2, \"sql_total_cents\": 1375, \"readonly\": true}}], \"errors\": []}",
+            "tool_call_id": "coordinator-1"
+          },
+          {
+            "type": "ai",
+            "content": "",
+            "tool_call_id": null
+          },
+          {
+            "type": "tool",
+            "content": "{\"status\": \"success\", \"result\": {\"score\": 1.0, \"passed\": 3, \"total\": 3, \"checks\": [{\"name\": \"totals\", \"passed\": true, \"detail\": \"\"}, {\"name\": \"rows_and_readonly\", \"passed\": true, \"detail\": \"\"}, {\"name\": \"chart\", \"passed\": true, \"detail\": \"\"}]}, \"files_changed\": [], \"checks\": [{\"check\": \"reviewer\", \"passed\": true, \"evidence\": {\"score\": 1.0, \"passed\": 3, \"total\": 3, \"checks\": [{\"name\": \"totals\", \"passed\": true, \"detail\": \"\"}, {\"name\": \"rows_and_readonly\", \"passed\": true, \"detail\": \"\"}, {\"name\": \"chart\", \"passed\": true, \"detail\": \"\"}]}}], \"errors\": []}",
+            "tool_call_id": "coordinator-2"
+          },
+          {
+            "type": "ai",
+            "content": "Synthetic collaboration completed; consult independent check results.",
+            "tool_call_id": null
+          }
+        ]
+      },
+      {
+        "case": "complex-concurrent",
+        "request_id": 6,
+        "seconds": 1.743166463000307,
+        "success": true,
+        "checks": {
+          "score": 1.0,
+          "passed": 3,
+          "total": 3,
+          "checks": [
+            {
+              "name": "totals",
+              "passed": true,
+              "detail": ""
+            },
+            {
+              "name": "rows_and_readonly",
+              "passed": true,
+              "detail": ""
+            },
+            {
+              "name": "chart",
+              "passed": true,
+              "detail": ""
+            }
+          ]
+        },
+        "answer": {
+          "total_cents": 1375,
+          "valid_rows": 3,
+          "rejected_rows": 2,
+          "sql_total_cents": 1375,
+          "readonly": true
+        },
+        "messages": [
+          {
+            "type": "human",
+            "content": "Offline independent fixture 6",
+            "tool_call_id": null
+          },
+          {
+            "type": "ai",
+            "content": "",
+            "tool_call_id": null
+          },
+          {
+            "type": "tool",
+            "content": "{\"status\": \"success\", \"result\": {\"total_cents\": 1375, \"valid_rows\": 3, \"rejected_rows\": 2, \"sql_total_cents\": 1375, \"readonly\": true}, \"files_changed\": [], \"checks\": [{\"check\": \"explorer\", \"passed\": true, \"evidence\": {\"total_cents\": 1375, \"valid_rows\": 3, \"rejected_rows\": 2, \"sql_total_cents\": 1375, \"readonly\": true}}], \"errors\": []}",
+            "tool_call_id": "coordinator-0"
+          },
+          {
+            "type": "ai",
+            "content": "",
+            "tool_call_id": null
+          },
+          {
+            "type": "tool",
+            "content": "{\"status\": \"success\", \"result\": {\"total_cents\": 1375, \"valid_rows\": 3, \"rejected_rows\": 2, \"sql_total_cents\": 1375, \"readonly\": true}, \"files_changed\": [\"workspace/report.py\", \"workspace/answer.json\", \"workspace/summary.svg\"], \"checks\": [{\"check\": \"implementer\", \"passed\": true, \"evidence\": {\"total_cents\": 1375, \"valid_rows\": 3, \"rejected_rows\": 2, \"sql_total_cents\": 1375, \"readonly\": true}}], \"errors\": []}",
+            "tool_call_id": "coordinator-1"
+          },
+          {
+            "type": "ai",
+            "content": "",
+            "tool_call_id": null
+          },
+          {
+            "type": "tool",
+            "content": "{\"status\": \"success\", \"result\": {\"score\": 1.0, \"passed\": 3, \"total\": 3, \"checks\": [{\"name\": \"totals\", \"passed\": true, \"detail\": \"\"}, {\"name\": \"rows_and_readonly\", \"passed\": true, \"detail\": \"\"}, {\"name\": \"chart\", \"passed\": true, \"detail\": \"\"}]}, \"files_changed\": [], \"checks\": [{\"check\": \"reviewer\", \"passed\": true, \"evidence\": {\"score\": 1.0, \"passed\": 3, \"total\": 3, \"checks\": [{\"name\": \"totals\", \"passed\": true, \"detail\": \"\"}, {\"name\": \"rows_and_readonly\", \"passed\": true, \"detail\": \"\"}, {\"name\": \"chart\", \"passed\": true, \"detail\": \"\"}]}}], \"errors\": []}",
+            "tool_call_id": "coordinator-2"
+          },
+          {
+            "type": "ai",
+            "content": "Synthetic collaboration completed; consult independent check results.",
+            "tool_call_id": null
+          }
+        ]
+      },
+      {
+        "case": "complex-concurrent",
+        "request_id": 7,
+        "seconds": 1.5351074959999096,
+        "success": true,
+        "checks": {
+          "score": 1.0,
+          "passed": 3,
+          "total": 3,
+          "checks": [
+            {
+              "name": "totals",
+              "passed": true,
+              "detail": ""
+            },
+            {
+              "name": "rows_and_readonly",
+              "passed": true,
+              "detail": ""
+            },
+            {
+              "name": "chart",
+              "passed": true,
+              "detail": ""
+            }
+          ]
+        },
+        "answer": {
+          "total_cents": 1375,
+          "valid_rows": 3,
+          "rejected_rows": 2,
+          "sql_total_cents": 1375,
+          "readonly": true
+        },
+        "messages": [
+          {
+            "type": "human",
+            "content": "Offline independent fixture 7",
+            "tool_call_id": null
+          },
+          {
+            "type": "ai",
+            "content": "",
+            "tool_call_id": null
+          },
+          {
+            "type": "tool",
+            "content": "{\"status\": \"success\", \"result\": {\"total_cents\": 1375, \"valid_rows\": 3, \"rejected_rows\": 2, \"sql_total_cents\": 1375, \"readonly\": true}, \"files_changed\": [], \"checks\": [{\"check\": \"explorer\", \"passed\": true, \"evidence\": {\"total_cents\": 1375, \"valid_rows\": 3, \"rejected_rows\": 2, \"sql_total_cents\": 1375, \"readonly\": true}}], \"errors\": []}",
+            "tool_call_id": "coordinator-0"
+          },
+          {
+            "type": "ai",
+            "content": "",
+            "tool_call_id": null
+          },
+          {
+            "type": "tool",
+            "content": "{\"status\": \"success\", \"result\": {\"total_cents\": 1375, \"valid_rows\": 3, \"rejected_rows\": 2, \"sql_total_cents\": 1375, \"readonly\": true}, \"files_changed\": [\"workspace/report.py\", \"workspace/answer.json\", \"workspace/summary.svg\"], \"checks\": [{\"check\": \"implementer\", \"passed\": true, \"evidence\": {\"total_cents\": 1375, \"valid_rows\": 3, \"rejected_rows\": 2, \"sql_total_cents\": 1375, \"readonly\": true}}], \"errors\": []}",
+            "tool_call_id": "coordinator-1"
+          },
+          {
+            "type": "ai",
+            "content": "",
+            "tool_call_id": null
+          },
+          {
+            "type": "tool",
+            "content": "{\"status\": \"success\", \"result\": {\"score\": 1.0, \"passed\": 3, \"total\": 3, \"checks\": [{\"name\": \"totals\", \"passed\": true, \"detail\": \"\"}, {\"name\": \"rows_and_readonly\", \"passed\": true, \"detail\": \"\"}, {\"name\": \"chart\", \"passed\": true, \"detail\": \"\"}]}, \"files_changed\": [], \"checks\": [{\"check\": \"reviewer\", \"passed\": true, \"evidence\": {\"score\": 1.0, \"passed\": 3, \"total\": 3, \"checks\": [{\"name\": \"totals\", \"passed\": true, \"detail\": \"\"}, {\"name\": \"rows_and_readonly\", \"passed\": true, \"detail\": \"\"}, {\"name\": \"chart\", \"passed\": true, \"detail\": \"\"}]}}], \"errors\": []}",
+            "tool_call_id": "coordinator-2"
+          },
+          {
+            "type": "ai",
+            "content": "Synthetic collaboration completed; consult independent check results.",
+            "tool_call_id": null
+          }
+        ]
+      },
+      {
+        "case": "complex-concurrent",
+        "request_id": 8,
+        "seconds": 1.4504508399995757,
+        "success": true,
+        "checks": {
+          "score": 1.0,
+          "passed": 3,
+          "total": 3,
+          "checks": [
+            {
+              "name": "totals",
+              "passed": true,
+              "detail": ""
+            },
+            {
+              "name": "rows_and_readonly",
+              "passed": true,
+              "detail": ""
+            },
+            {
+              "name": "chart",
+              "passed": true,
+              "detail": ""
+            }
+          ]
+        },
+        "answer": {
+          "total_cents": 1375,
+          "valid_rows": 3,
+          "rejected_rows": 2,
+          "sql_total_cents": 1375,
+          "readonly": true
+        },
+        "messages": [
+          {
+            "type": "human",
+            "content": "Offline independent fixture 8",
+            "tool_call_id": null
+          },
+          {
+            "type": "ai",
+            "content": "",
+            "tool_call_id": null
+          },
+          {
+            "type": "tool",
+            "content": "{\"status\": \"success\", \"result\": {\"total_cents\": 1375, \"valid_rows\": 3, \"rejected_rows\": 2, \"sql_total_cents\": 1375, \"readonly\": true}, \"files_changed\": [], \"checks\": [{\"check\": \"explorer\", \"passed\": true, \"evidence\": {\"total_cents\": 1375, \"valid_rows\": 3, \"rejected_rows\": 2, \"sql_total_cents\": 1375, \"readonly\": true}}], \"errors\": []}",
+            "tool_call_id": "coordinator-0"
+          },
+          {
+            "type": "ai",
+            "content": "",
+            "tool_call_id": null
+          },
+          {
+            "type": "tool",
+            "content": "{\"status\": \"success\", \"result\": {\"total_cents\": 1375, \"valid_rows\": 3, \"rejected_rows\": 2, \"sql_total_cents\": 1375, \"readonly\": true}, \"files_changed\": [\"workspace/report.py\", \"workspace/answer.json\", \"workspace/summary.svg\"], \"checks\": [{\"check\": \"implementer\", \"passed\": true, \"evidence\": {\"total_cents\": 1375, \"valid_rows\": 3, \"rejected_rows\": 2, \"sql_total_cents\": 1375, \"readonly\": true}}], \"errors\": []}",
+            "tool_call_id": "coordinator-1"
+          },
+          {
+            "type": "ai",
+            "content": "",
+            "tool_call_id": null
+          },
+          {
+            "type": "tool",
+            "content": "{\"status\": \"success\", \"result\": {\"score\": 1.0, \"passed\": 3, \"total\": 3, \"checks\": [{\"name\": \"totals\", \"passed\": true, \"detail\": \"\"}, {\"name\": \"rows_and_readonly\", \"passed\": true, \"detail\": \"\"}, {\"name\": \"chart\", \"passed\": true, \"detail\": \"\"}]}, \"files_changed\": [], \"checks\": [{\"check\": \"reviewer\", \"passed\": true, \"evidence\": {\"score\": 1.0, \"passed\": 3, \"total\": 3, \"checks\": [{\"name\": \"totals\", \"passed\": true, \"detail\": \"\"}, {\"name\": \"rows_and_readonly\", \"passed\": true, \"detail\": \"\"}, {\"name\": \"chart\", \"passed\": true, \"detail\": \"\"}]}}], \"errors\": []}",
+            "tool_call_id": "coordinator-2"
+          },
+          {
+            "type": "ai",
+            "content": "Synthetic collaboration completed; consult independent check results.",
+            "tool_call_id": null
+          }
+        ]
+      },
+      {
+        "case": "complex-concurrent",
+        "request_id": 9,
+        "seconds": 1.484022274000381,
+        "success": true,
+        "checks": {
+          "score": 1.0,
+          "passed": 3,
+          "total": 3,
+          "checks": [
+            {
+              "name": "totals",
+              "passed": true,
+              "detail": ""
+            },
+            {
+              "name": "rows_and_readonly",
+              "passed": true,
+              "detail": ""
+            },
+            {
+              "name": "chart",
+              "passed": true,
+              "detail": ""
+            }
+          ]
+        },
+        "answer": {
+          "total_cents": 1375,
+          "valid_rows": 3,
+          "rejected_rows": 2,
+          "sql_total_cents": 1375,
+          "readonly": true
+        },
+        "messages": [
+          {
+            "type": "human",
+            "content": "Offline independent fixture 9",
+            "tool_call_id": null
+          },
+          {
+            "type": "ai",
+            "content": "",
+            "tool_call_id": null
+          },
+          {
+            "type": "tool",
+            "content": "{\"status\": \"success\", \"result\": {\"total_cents\": 1375, \"valid_rows\": 3, \"rejected_rows\": 2, \"sql_total_cents\": 1375, \"readonly\": true}, \"files_changed\": [], \"checks\": [{\"check\": \"explorer\", \"passed\": true, \"evidence\": {\"total_cents\": 1375, \"valid_rows\": 3, \"rejected_rows\": 2, \"sql_total_cents\": 1375, \"readonly\": true}}], \"errors\": []}",
+            "tool_call_id": "coordinator-0"
+          },
+          {
+            "type": "ai",
+            "content": "",
+            "tool_call_id": null
+          },
+          {
+            "type": "tool",
+            "content": "{\"status\": \"success\", \"result\": {\"total_cents\": 1375, \"valid_rows\": 3, \"rejected_rows\": 2, \"sql_total_cents\": 1375, \"readonly\": true}, \"files_changed\": [\"workspace/report.py\", \"workspace/answer.json\", \"workspace/summary.svg\"], \"checks\": [{\"check\": \"implementer\", \"passed\": true, \"evidence\": {\"total_cents\": 1375, \"valid_rows\": 3, \"rejected_rows\": 2, \"sql_total_cents\": 1375, \"readonly\": true}}], \"errors\": []}",
+            "tool_call_id": "coordinator-1"
+          },
+          {
+            "type": "ai",
+            "content": "",
+            "tool_call_id": null
+          },
+          {
+            "type": "tool",
+            "content": "{\"status\": \"success\", \"result\": {\"score\": 1.0, \"passed\": 3, \"total\": 3, \"checks\": [{\"name\": \"totals\", \"passed\": true, \"detail\": \"\"}, {\"name\": \"rows_and_readonly\", \"passed\": true, \"detail\": \"\"}, {\"name\": \"chart\", \"passed\": true, \"detail\": \"\"}]}, \"files_changed\": [], \"checks\": [{\"check\": \"reviewer\", \"passed\": true, \"evidence\": {\"score\": 1.0, \"passed\": 3, \"total\": 3, \"checks\": [{\"name\": \"totals\", \"passed\": true, \"detail\": \"\"}, {\"name\": \"rows_and_readonly\", \"passed\": true, \"detail\": \"\"}, {\"name\": \"chart\", \"passed\": true, \"detail\": \"\"}]}}], \"errors\": []}",
+            "tool_call_id": "coordinator-2"
+          },
+          {
+            "type": "ai",
+            "content": "Synthetic collaboration completed; consult independent check results.",
+            "tool_call_id": null
+          }
+        ]
+      }
+    ],
+    "metrics": {
+      "requests": 10,
+      "successes": 10,
+      "error_rate": 0.0,
+      "min": 1.4504508399995757,
+      "max": 2.082615772000281,
+      "avg": 1.8022837102999802,
+      "p50": 1.8528845030000411,
+      "p99_nearest_rank": 2.082615772000281,
+      "elapsed_seconds": 2.18080735500007,
+      "successful_requests_per_minute": 275.12746535100564,
+      "api_tokens": 0
+    }
+  },
+  "profile_sample": {
+    "case": "complex",
+    "iteration": "profile",
+    "seconds": 0.499825206999958,
+    "success": true,
+    "score": 1.0,
+    "error": null,
+    "main_tool_calls": 3,
+    "tool_events": 8,
+    "delegation_seconds": 0.287879
+  }
+}

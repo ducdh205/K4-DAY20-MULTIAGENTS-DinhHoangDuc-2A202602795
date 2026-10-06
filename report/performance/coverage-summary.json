@@ -1,0 +1,7 @@
+{
+  "coverage_version": "7.16.2",
+  "coverage_percent": 90.57815845824412,
+  "source": "all src/lab modules",
+  "pytest_exit_code": 0,
+  "source_revision": "9b49902666192d5ca8d16bb3e2d0138086a32c36"
+}

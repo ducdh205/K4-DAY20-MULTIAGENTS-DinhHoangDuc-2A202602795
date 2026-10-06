@@ -1,6 +1,6 @@
 # Báo cáo Lab: Self evolving Agentic
 
-Trạng thái: đã hoàn thành Phần 0 và mã harness của Phần 1 theo `README.md` và `GUIDE.md`; worker/giao tiếp có 14 ca kiểm chứng ngoại tuyến, tools/hợp tác có thêm 14 ca đạt. Các test Phần 0–1 đạt 30/30; hai test curator còn thất bại do TODO của Phần 3 trong repo. Phần 2 chưa hoàn tất: batch dừng sau hai lượt baseline do hạn mức token ngày của Groq; bốn lượt còn lại chưa chạy. Không có kết quả benchmark hoàn tất để kết luận về chất lượng.
+Trạng thái: mã harness và curator đã hoàn thiện; **32/32 test gốc đạt**, 35 nhóm kiểm chứng bổ sung đạt, statement coverage toàn bộ `src/lab` **90,58%**. Đã đo lặp ba lần trên fixture ngoại tuyến và tải 10 yêu cầu độc lập. Benchmark Groq vẫn chưa hoàn tất: hai lượt thử mới gặp quota phút/ngày, chưa có lượt tác vụ học thực thi hoàn tất để kết luận chất lượng. Chưa sinh skill chính thức hoặc đóng băng/chạy tập đánh giá.
 
 ## 1. Thông tin nhóm và cấu hình
 
@@ -11,7 +11,7 @@ Trạng thái: đã hoàn thành Phần 0 và mã harness của Phần 1 theo `R
 - Nhà cung cấp của các lượt đã lưu: Groq, endpoint tương thích OpenAI `https://api.groq.com/openai/v1`; cấu hình batch học là `LAB_MODEL=qwen/qwen3.8-27b`, `LAB_TEMPERATURE=0`, `LAB_MAX_INPUT_TOKENS=7000`, `LAB_MAX_OUTPUT_TOKENS=900`. Phần 0 dùng `openai/gpt-oss-20b`; các lượt chẩn đoán đã thử cả 20b, 120b và Qwen. Batch dự kiến sáu lượt học đặt `recursion_limit=20` để giới hạn chi phí; giá trị mặc định của runner vẫn là 60. Timeout mỗi lệnh shell là 120 giây.
 - Môi trường: Windows với Ubuntu trên WSL2, Python 3.12.3 trong `.venv`; chạy trực tiếp trong WSL, không dùng Docker. Kernel: `6.6.87.2-microsoft-standard-WSL2`.
 - Phiên bản đã cài: `deepagents==0.7.21`, `lab-deepagents==0.1.0`; `pip show` xác nhận lab được cài editable từ thư mục repo.
-- Có 11 lượt tác vụ thật: 9 lượt chẩn đoán tại `results/attempts/` và 2 lượt batch học tại `results/baseline/`; cả 11 đều có `error`. Tổng usage ghi nhận **271.755 token**; tổng thời gian các lượt **1.747,6 giây**. Kiểm tra kết nối riêng dùng thêm 101 token; tour/test ngoại tuyến không tốn token. Bảng chi tiết ở mục 7 và phụ lục.
+- Có **13 lượt tác vụ thật**: 11 lượt lịch sử (9 tại `results/attempts/`, 2 tại `results/baseline/`) ghi nhận 271.755 token/1.747,6 giây; hai lượt thử Phần 5 tại `results/performance/` thêm 16.894 token/182,0 giây. Tổng usage **288.649 token**, thời gian **1.929,6 giây**; cả 13 có `error`. Kiểm tra kết nối riêng dùng thêm 101 token. Đây là usage ghi trong các lần chạy, không phải hóa đơn hay counter quota hiện tại của tài khoản. Bảng chính ở mục 7 giữ dữ liệu baseline lịch sử; các thử nghiệm mới trình bày riêng ở mục 5.
 - Commit của tag `freeze`: chưa tạo (thuộc Phần 4).
 - Khóa API chỉ lưu trong `.env`; `git check-ignore .env .venv` xác nhận cả cấu hình và môi trường ảo được Git bỏ qua.
 - Căn cứ chọn mô hình: [Groq Tool Use](https://console.groq.com/docs/tool-use/overview) liệt kê Qwen hỗ trợ tool calling và parallel tool calling. Cấu hình sử dụng nhánh `LAB_BASE_URL` của `lab.model.make_model`, không cần cài thêm `langchain-groq`.
@@ -152,9 +152,54 @@ Log tool dùng callback có khóa để nhận sự kiện từ các worker ch�
 
 Fixture và tuyến gọi model được điều khiển bằng script ngoại tuyến; công cụ, database, artifact và checker thực thi thật. Điểm trên là điểm của fixture tổng hợp, không phải tác vụ học/đánh giá của lab hay bằng chứng chất lượng Groq. File/checker tổng hợp chỉ nằm trong thư mục tạm; bản ghi được tự dọn và không ghi vào `results/`. Không sinh skill, không đóng băng hay chạy lại benchmark trong bước tích hợp tools.
 
+### Test, debug và hiệu suất (Phần 5 của tài liệu tham khảo)
+
+Theo README/RUBRIC, không thêm hay sửa `tests/` và `scripts/` có sẵn. Không có `tests/test_05_integration.py` hoặc lớp `MultiAgentSystem` trong repo này; các kiểm chứng bổ sung và công cụ đo được đặt tại `report/`. Kết quả được lấy từ thực thi, không dùng các số ví dụ trong tài liệu tham khảo.
+
+**Sửa lỗi suite.** Tái hiện hai lỗi `NotImplementedError` trong `test_04_curator`; nguyên nhân là TODO `curate_skills`. Hàm hiện chỉ lấy check thất bại từ lượt học không có execution error, đưa tên check/`detail` và 6.000 ký tự cuối vết vào prompt, gọi model một lần khi có dữ liệu dùng được, rồi dùng parser/validator có sẵn để ghi tối đa số skill yêu cầu. Bỏ JSON sai, dữ liệu eval, block trùng/không hợp lệ và đường dẫn symlink ra ngoài; không gọi model nếu thiếu feedback dùng được hoặc cap bằng 0. Không sinh skill thật từ các lượt bị quota chặn. Parser, validator, test và dữ liệu tác vụ được giữ nguyên.
+
+| Kiểm chứng | Kết quả thực tế |
+|---|---|
+| Suite gốc sau sửa curator, `pytest -v --durations=10` | **32 passed in 39,51s** |
+| Suite gốc trong lượt đo coverage | **32 passed in 65,90s** |
+| Worker/giao tiếp; tools/hợp tác; curator bổ sung | **14/14; 14/14; 4/4 nhóm đạt** |
+| Driver benchmark: dừng ở HTTP 400/429, tuân thủ cap và chỉ chọn tác vụ học | **3/3 nhóm ngoại tuyến đạt**; mock chỉ ghi trong thư mục tạm |
+| Statement coverage toàn bộ `src/lab` | **423/467 dòng, 90,58%**, còn 44 dòng chưa đo; không đo branch coverage |
+| Lặp ba nhóm fixture ba lần mỗi nhóm | **9/9 yêu cầu đạt** |
+| Tải 10 graph/fixture độc lập dùng `ainvoke`, timeout mỗi graph 120 giây | **10/10 đạt**, không trộn artifact giữa yêu cầu |
+| Ca complex riêng dưới cProfile | Đạt, output profiling được lưu riêng |
+
+Log đầy đủ ở [performance/verification.log](performance/verification.log); coverage đo bằng `coverage==7.16.2`, lưu [coverage-summary.json](performance/coverage-summary.json) và [coverage.json](performance/coverage.json). Lần chạy pytest thứ hai phục vụ đo coverage, đồng thời chạy ba script regression ngoại tuyến. Test chậm nhất ở lượt bình thường là kiểm tra workspace chưa sửa không đạt điểm tối đa (15,83 giây); số liệu này thuộc bộ test, không phải latency API.
+
+**Đo harness ngoại tuyến.** Dữ liệu CSV/SQLite, script và artifact đều thực thi thật; quyết định gọi công cụ được model kịch bản điều khiển. Nhóm simple chạy script đã có, nhóm code tạo script rồi chạy, nhóm complex giao việc qua ba worker. Mỗi request được chấm ba check fixture bằng grader có sẵn. Timer cho lượt tuần tự bao gồm `run_task` (chuẩn bị bản sao, dựng graph, thực thi, chấm và lưu), loại thời gian dựng fixture nguồn/import; tải đồng thời bao gồm cả dựng fixture và graph, nên không dùng hai phép đo để suy ra speedup trực tiếp.
+
+| Fixture | N | Min (s) | Max (s) | Avg (s) | P50 (s) | P99 mẫu (s) |
+|---|---:|---:|---:|---:|---:|---:|
+| Simple data/query script | 3 | 0,221 | 0,779 | 0,407 | 0,223 | 0,779 |
+| Code/file generation | 3 | 0,167 | 0,273 | 0,223 | 0,229 | 0,273 |
+| Complex, ba worker | 3 | 0,340 | 0,502 | 0,406 | 0,376 | 0,502 |
+| Complex, 10 yêu cầu đồng thời | 10 | 1,450 | 2,083 | 1,802 | 1,853 | 2,083 |
+
+P50 là median, P99 dùng nearest rank; với N=3/10, P99 này chính là max mẫu, chưa ước lượng đáng tin cậy cho tail latency. Tải đồng thời hoàn tất trong 2,181 giây, tương đương tốc độ quy đổi **275,13 yêu cầu thành công/phút** trong burst ngắn; không phải throughput duy trì hay throughput Groq. Error rate fixture là 0%, API call/token bằng 0. Chưa đo worker utilization: thời gian tool và `task` có thể lồng/đè nhau, không tự suy ra 70–90% từ tổng duration.
+
+Raw record, trace, JSON của từng yêu cầu và summary ở [offline-20261006T151924755263Z](performance/offline-20261006T151924755263Z/summary.json); [profile.txt](performance/offline-20261006T151924755263Z/profile.txt) ghi 352.503 function call trong 0,511 giây, phần lớn cumulative time quan sát trên main thread thuộc luồng chờ executor/future. cProfile này không đo riêng CPU của thread worker/subprocess và không chứng minh Python startup là bottleneck. Chưa áp dụng cache hoặc refactor để tối ưu: các phép đo fixture ngắn chưa chỉ ra một thay đổi có lợi vượt nhiễu. Nhóm simple có khoảng dao động lớn giữa lần đầu và các lần sau, cần thêm mẫu trước khi so sánh.
+
+**Thử benchmark Groq thật.** Người dùng duyệt tối đa 18 lượt: hai điều kiện × ba tác vụ học × ba lần lặp. Lần gọi mở rộng ban đầu bị auto-review từ chối vì quyền cũ chỉ ghi sáu lượt; sau khi nhận quyền mới, thực thi hai lượt dưới đây. SDK retry bị tắt để mỗi lỗi được lưu rõ; giữ nguyên model Qwen, temperature 0, input profile 7.000, output 900, recursion limit 20 và backend output 10.000 ký tự. Lượt đầu không pacing; lượt thử tiếp có limiter chung một lần gọi model/60 giây. Không chạy tập eval.
+
+| Lượt baseline code-learn | Điểm raw | Input/output/total token | Giây | Bằng chứng dừng |
+|---|---|---:|---:|---|
+| [Không pacing](../results/performance/groq-20261006T152116351268Z/iteration-1/baseline/code-learn/run.json) | 0/10 | 6.568 / 78 / **6.646** | 1,6 | HTTP 429 theo phút sau hai lần gọi model; 3 tool call, chỉ liệt kê file. |
+| [Pacing 60 giây](../results/performance/groq-20261006T152443668368Z/iteration-1/baseline/code-learn/run.json) | 0/10 | 10.017 / 231 / **10.248** | 180,4 | Ba lần gọi model qua được hạn mức phút; lần tiếp bị quota ngày: Limit 200.000, Used 199.641, Requested 4.707. Có 8 tool call, đã đọc đặc tả/code/test, chưa sửa file. |
+
+Ledger điều chỉnh: pacing giúp ba lần gọi được chấp nhận trước khi gặp quota ngày, đổi lại có thời gian chờ chủ động; chưa tạo một lượt pipeline hoàn tất, nên không coi đây là cải thiện chất lượng hoặc latency. Không tiếp tục retry quota ngày. **2/18 lượt tối đa đã thử; 16 lượt chưa thực thi**, chưa đủ ba mẫu cho bất kỳ cặp tác vụ/điều kiện nào. Chưa có P50/P99, throughput hoặc error rate đại diện cho model thật; hai thời gian trên là thời gian của lượt bị chặn, không phải latency tác vụ thành công. Groq phân biệt quota phút/ngày và cung cấp thông tin retry trong phản hồi 429: [tài liệu Rate Limits](https://console.groq.com/docs/rate-limits).
+
+Kiểm chứng driver còn tái hiện lỗi không dừng ở tên exception `OpenAIInvalidRequestError`; đã bổ sung nhận diện tên lỗi request/context của LangChain và kiểm chứng lại 3/3 nhóm đạt. Những manifest mô phỏng của ca unit này chỉ tạo trong thư mục tạm và tự dọn; không tính là lượt Groq hoặc điểm benchmark. Cấu hình/record thật của hai lượt đã chạy được giữ nguyên.
+
+`report/debug_runs.py` phân tích 13 bản ghi thật: 8 lỗi request/context/transport của provider, 4 rate limit và 1 GraphRecursionError; tổng 288.649 token/1.929,6 giây, không có tác vụ thành công. [learning-debug.json](performance/learning-debug.json) giữ số tool chính, số tool trong vết, handoff còn chờ và lỗi worker nếu có. Những bản ghi lịch sử chưa có log tool mới không bị sửa để thêm số liệu. Chưa thể xếp lỗi hạ tầng vào taxonomy chất lượng tác tử hay tính điểm/token có ý nghĩa từ tập này.
+
 ## 6. Self-evolving: skill do curator sinh (Phần 3)
 
-- Chưa triển khai/chạy curator (Phần 3); chưa sinh, xóa hoặc sửa tay skill. Bảng này chờ kết quả curator sau khi các lượt học đủ điều kiện hoàn tất.
+- `curate_skills` đã triển khai và đạt test; chưa chạy curator bằng model thật, chưa sinh/xóa/sửa tay skill chính thức. Bảng này chờ các lượt học có feedback dùng được; lượt có execution error bị lọc để tránh học từ lỗi quota.
 
 | Skill | Tổng quát hay riêng cho tác vụ học? | Đúng hay sai (nêu chỗ sai nếu có) | Độ dài, `description` và `skills_read` ở Phần 3.4 |
 |---|---|---|---|
@@ -213,7 +258,7 @@ Chưa đủ dữ liệu trả lời sáu câu so sánh dưới đây: không có
 
 ## 10. Kết luận
 
-Harness điều phối, backend và runner đã qua 30 test Phần 0–1. Hai lượt batch học bị dừng bởi vòng lặp/guardrail và quota ngày; chưa có bằng chứng đủ để kết luận subagents hoặc skill cải thiện điểm. Các bản ghi thật và lượt chẩn đoán được giữ để kiểm toán usage. Cần quota khả dụng và kiểm chứng cách quản lý ngữ cảnh giúp tác tử chuyển từ đọc sang thực hiện, rồi hoàn tất tác vụ học trước khi chạy curator và đóng băng.
+Harness gồm curator đã qua 32 test gốc và 35 nhóm kiểm chứng bổ sung; statement coverage đạt 90,58%. Đo fixture ngoại tuyến có ba lần lặp mỗi nhóm và 10/10 yêu cầu đồng thời đạt. Hai thử nghiệm Groq mới vẫn bị quota phút/ngày chặn, nên chưa có bằng chứng đủ để kết luận subagents hoặc skill cải thiện điểm hoặc đạt SLA của model thật. Các bản ghi được giữ để kiểm toán usage; cần quota khả dụng để hoàn tất tác vụ học trước khi sinh skill chính thức và đóng băng.
 
 ## Phụ lục
 
@@ -312,7 +357,7 @@ Cấu hình không chứa khóa lưu cạnh từng lượt chính trong `configu
 
 Lệnh chạy trong WSL tại gốc repo. Script kiểm chứng bỏ hai biến ngân sách tùy chọn trong môi trường của chính tiến trình kiểm thử, không sửa `.env`, và truyền model ngoại tuyến trực tiếp vào graph/runner. Phiên bản framework kiểm chứng: `deepagents==0.7.21`, `langchain==1.4.3`, `langchain-core==1.6.6`.
 
-Kết quả thực tế: **14/14 ca giao tiếp đạt**, exit code 0. Sau thay đổi cuối, toàn bộ suite có **30 passed, 2 failed in 87,62s**; hai lỗi vẫn là TODO `curate_skills` tại `src/lab/curator.py:71`. Trước khi thêm xử lý lỗi, ca worker timeout gây TimeoutError làm graph dừng; sau thay đổi ca này đạt ở cả sync và async. Kiểm chứng log cũng đã tái hiện `KeyError: communications` trước khi bổ sung ghi sự kiện và đạt sau thay đổi.
+Kết quả tại bước worker, trước triển khai curator: **14/14 ca giao tiếp đạt**, exit code 0; toàn bộ suite khi đó có **30 passed, 2 failed in 87,62s** vì TODO `curate_skills`. Trước khi thêm xử lý lỗi, ca worker timeout gây TimeoutError làm graph dừng; sau thay đổi ca này đạt ở cả sync và async. Kiểm chứng log cũng đã tái hiện `KeyError: communications` trước khi bổ sung ghi sự kiện và đạt sau thay đổi.
 
 Commit cục bộ cho bước này: `8c19d4d` (protocol worker/context isolation), `4bc0aff` (xử lý và ghi lỗi worker), `8ee731f` (log request/reply). Không chạy lại API, không sửa bản ghi benchmark cũ và không tạo skill thủ công. Các bản ghi cũ được giữ với đúng source revision tại thời điểm chạy, nên chưa có hai trường log mới; chỉ các lần chạy bằng mã mới mới có chúng.
 
@@ -327,3 +372,26 @@ Commit cục bộ cho bước này: `8c19d4d` (protocol worker/context isolation
 Kiểm chứng tools/hợp tác đạt **14/14**, kiểm chứng worker/giao tiếp đạt **14/14** sau khi thêm log tool. Suite gốc sau thay đổi backend/runner: **30 passed, 2 failed in 68,19s**; hai lỗi là TODO curator chưa triển khai. Không có file `tests/test_04_tools.py` để khẳng định “4 passed” như ví dụ tham khảo.
 
 Commit cục bộ: `0b53801` (giới hạn output và kiểm chứng backend), `7884033` (log cả tool trong worker và kiểm chứng lỗi). Cấu hình output mới chỉ áp dụng các lượt chạy bằng revision mới; không sửa hay tái gán cấu hình cho 11 bản ghi Groq lịch sử. Hai script ngoại tuyến truyền model trực tiếp và không cung cấp usage token giả.
+
+### Tái lập test/debug/profiling Phần 5 tham khảo
+
+```bash
+.venv/bin/python -m pytest -v --durations=10
+.venv/bin/python report/verify_curator.py
+.venv/bin/python report/profile_system.py --repetitions 3 --concurrency 10
+.venv/bin/python report/debug_runs.py
+.venv/bin/python -m pip install coverage==7.16.2
+.venv/bin/python report/measure_coverage.py
+.venv/bin/python report/verify_benchmark_controls.py
+```
+
+Lệnh provider đã chạy sau khi người dùng cấp quyền 18 lượt:
+
+```bash
+# Lượt đầu chạy trước khi thêm pacing, tương đương CLI hiện tại:
+.venv/bin/python report/benchmark_learn.py --repetitions 3 --request-interval 0
+# Đã dùng một lượt, cap đợt thử tiếp còn 17; dừng sau một lượt lỗi quota ngày:
+.venv/bin/python report/benchmark_learn.py --repetitions 3 --max-runs 17 --request-interval 60
+```
+
+Hai lệnh provider trên dùng token và gửi file học tới Groq; không tự chạy lại khi chỉ tái lập phần ngoại tuyến. Mỗi lần tạo thư mục mới có timestamp, giữ configuration/manifest và raw record. Không có kết quả của 16 lượt chưa chạy. Commit harness tại thời điểm đo: `9b49902` (curator hoàn thiện); các helper thí nghiệm được phát triển trong working tree, điều kiện thực tế của từng lượt ghi trong configuration và bảng mục 5. Skill chính thức, tag freeze, dữ liệu benchmark cũ và test/tasks/scripts có sẵn không đổi.
