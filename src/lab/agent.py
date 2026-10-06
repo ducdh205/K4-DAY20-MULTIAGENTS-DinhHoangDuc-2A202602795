@@ -9,6 +9,7 @@ from pathlib import Path
 
 from deepagents import create_deep_agent
 from deepagents.backends import LocalShellBackend
+from deepagents.middleware.summarization import SummarizationMiddleware
 
 from .model import make_model
 from .subagents import get_subagents
@@ -88,11 +89,26 @@ def build_agent(sandbox: Path, mode: str = "single", use_skills: bool = False, m
         # Provider request limits may be smaller than the advertised context window.
         model.profile = {**(model.profile or {}), "max_input_tokens": limit}
 
+    backend = make_backend(sandbox)
     kwargs = {}
+    if context_limit:
+        # Compact completed tool exchanges before the provider's request budget
+        # is reached; the complete history remains available in the backend.
+        kwargs["middleware"] = [SummarizationMiddleware(
+            model=model.model_copy(update={"max_tokens": 768}),
+            backend=backend,
+            trigger=("fraction", 0.5),
+            keep=("messages", 1),
+            trim_tokens_to_summarize=None,
+        )]
     prompt = BASE_PROMPT
     if mode == "subagents":
         kwargs["subagents"] = [
-            {**sub, "system_prompt": sub["system_prompt"] + " " + PATHS_NOTE}
+            {
+                **sub,
+                "system_prompt": sub["system_prompt"] + " " + PATHS_NOTE,
+                **({"middleware": kwargs["middleware"]} if context_limit else {}),
+            }
             for sub in get_subagents()
         ]
         prompt += SUBAGENTS_NOTE
@@ -103,6 +119,6 @@ def build_agent(sandbox: Path, mode: str = "single", use_skills: bool = False, m
     return create_deep_agent(
         model=model,
         system_prompt=prompt,
-        backend=make_backend(sandbox),
+        backend=backend,
         **kwargs,
     )
