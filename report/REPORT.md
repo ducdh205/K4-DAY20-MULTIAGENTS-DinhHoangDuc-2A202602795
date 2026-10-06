@@ -1,6 +1,6 @@
 # Báo cáo Lab: Self evolving Agentic
 
-Trạng thái: đã hoàn thành Phần 0 và mã harness của Phần 1 theo `README.md` và `GUIDE.md`; worker và giao tiếp sync/async đã qua 14 ca kiểm chứng ngoại tuyến. Các test Phần 0–1 đạt 30/30; hai test curator còn thất bại do TODO của Phần 3 trong repo. Phần 2 chưa hoàn tất: batch dừng sau hai lượt baseline do hạn mức token ngày của Groq; bốn lượt còn lại chưa chạy. Không có kết quả benchmark hoàn tất để kết luận về chất lượng.
+Trạng thái: đã hoàn thành Phần 0 và mã harness của Phần 1 theo `README.md` và `GUIDE.md`; worker/giao tiếp có 14 ca kiểm chứng ngoại tuyến, tools/hợp tác có thêm 14 ca đạt. Các test Phần 0–1 đạt 30/30; hai test curator còn thất bại do TODO của Phần 3 trong repo. Phần 2 chưa hoàn tất: batch dừng sau hai lượt baseline do hạn mức token ngày của Groq; bốn lượt còn lại chưa chạy. Không có kết quả benchmark hoàn tất để kết luận về chất lượng.
 
 ## 1. Thông tin nhóm và cấu hình
 
@@ -49,7 +49,7 @@ Về cấu trúc lab: chế độ `single` có tác tử chính và subagent m�
 | Handoff | Lời gọi `task` truyền mô tả công việc và `subagent_type`; subagent trả báo cáo cuối, sau đó quyền xử lý trở về tác tử chính. |
 | LangGraph | `create_deep_agent` trả graph đã biên dịch; runner dùng `stream_mode="values"` để giữ trạng thái cuối đã phát ra khi có lỗi. |
 | Guardrail | `recursion_limit=60`; timeout shell 120 giây; `inherit_env=False`; sandbox tạm ngoài repo được tự dọn; `skills_modified` phát hiện thay đổi skill. Không có retry tác vụ tự động làm tăng token mà không được ghi nhận. |
-| Trace | `trace.md` lưu luồng chính và kết quả công cụ; bản ghi mới thêm `communications` cho ID và request/reply, `worker_errors` cho báo cáo lỗi worker. `run.json` tiếp tục lưu UTC timestamp, điểm/check, token, thời gian và hash skill. Token cộng cả subagent; tool call chỉ đếm luồng chính. |
+| Trace | `trace.md` lưu luồng chính; bản ghi mới có `communications`, `worker_errors` và `tool_executions` ghi cả công cụ bên trong worker. `run.json` tiếp tục lưu UTC timestamp, điểm/check, token, thời gian và hash skill. Token cộng cả subagent; trường đếm `tool_calls` vẫn chỉ đếm luồng chính. |
 | Benchmark | Ba điều kiện do repo định nghĩa: `baseline`, `subagents`, `skills-auto`. Phần 2 chỉ đo ba tác vụ học; tập đánh giá chờ viết giả thuyết và đóng băng skill ở Phần 4. |
 
 Backend shell không kế thừa biến môi trường của tiến trình cha: chỉ nhận `PATH`, `HOME` trỏ sandbox và `PYTHONDONTWRITEBYTECODE`. Cả tác tử chính và subagent đều nhận quy ước đường dẫn tương đối từ prompt có sẵn. Khác với sơ đồ shared state tổng quát, ngữ cảnh hội thoại của subagent mặc định không chia sẻ toàn bộ; coordinator phải gửi đầy đủ yêu cầu khi giao việc.
@@ -122,6 +122,35 @@ Diagram mô tả ca kiểm chứng; model thật vẫn tự quyết định work
 | Tổng | **14/14 đạt, exit code 0** |
 
 Các model trong kiểm chứng là model điều khiển kịch bản ngoại tuyến, được ghi rõ trong [verify_worker_communication.py](verify_worker_communication.py). Công cụ file/shell thực thi thật trong thư mục tạm ngoài repo; model và lỗi provider là dữ liệu kiểm thử. Các bản ghi kiểm thử nằm trong thư mục tạm và được dọn, không ghi vào `results/`, không cộng token giả vào benchmark. Không sửa test/workspace có sẵn, không gọi Groq cho bước này.
+
+### Tích hợp tools và hợp tác agent (Phần 4 của tài liệu tham khảo)
+
+Repo không có `src/tools/*`, `tests/test_04_tools.py` hoặc `scripts/test_tool_integration.py` trong tài liệu tham khảo. Các công cụ file và shell được Deep Agents tạo từ backend; tích hợp được thực hiện trong `make_backend`, `build_agent` và `run_task`, theo phạm vi README/RUBRIC. Không thêm kết nối database thật hoặc sửa bộ chấm có sẵn.
+
+| Nhu cầu | Công cụ/cơ chế của repo | Kiểm chứng thực tế |
+|---|---|---|
+| BaseTool và input | Tool schema của framework; kiểm tra input của backend | Command trống, file thiếu, chuỗi cần sửa không tồn tại đều báo lỗi; đường dẫn `../` và symlink ra ngoài bị từ chối ở công cụ file. |
+| CSV và aggregation | Python standard library `csv`, `decimal` qua `execute` | Fixture gồm 5 dòng: 3 hợp lệ, 2 trống/sai; tổng 1.375 cent, giữ khoản âm và không cộng bằng float. |
+| Truy vấn database | `sqlite3` qua `execute` | Database SQLite tổng hợp trong thư mục tạm; mở URI `mode=ro`, dùng tham số truy vấn và đóng connection. Tổng SQL bằng CSV; thử DELETE trên fixture bị từ chối. Đây là kiểm chứng cách dùng thư viện qua shell, chưa có tool SQL chuyên biệt nhận truy vấn tùy ý. |
+| Tạo/sửa/chạy code | `write_file`, `edit_file`, `execute` | Implementer viết script, sửa tiêu đề, chạy script thật để tạo `answer.json` và biểu đồ `summary.svg`. Không cần pandas/matplotlib cho fixture này. |
+| Validation, comparison, scoring | Reviewer chạy checker; runner gọi `lab.grading.grade` có sẵn | Ba check độc lập so tổng, số dòng/quyền đọc database, và cấu trúc/nội dung SVG. Điểm là số check đạt chia tổng; không suy ra accuracy từ độ dài câu trả lời. |
+| Log công cụ | Callback tại runner, `run.json.tool_executions` | Ghi cả tool của coordinator và worker: ID, parent ID, tên, input, UTC timestamp, trạng thái, thời gian và output. Handoff giữ ID riêng trong `communications`. |
+
+Backend đặt `max_output_bytes=10_000`; phiên bản đang dùng thực tế cắt theo số ký tự Python, rồi thêm thông báo truncation. Kiểm chứng output 20.000 ký tự cho thấy giữ 10.000 ký tự dữ liệu và cờ `truncated=True`. Đây là giới hạn output trả lại, chưa phải giới hạn bộ nhớ khi thu stdout/stderr. Timeout mặc định vẫn là 120 giây theo GUIDE; kiểm chứng dùng override 1 giây cho lệnh ngủ 2 giây, thu exit code 124. Không thiết lập giới hạn RAM hay CPU cứng; timeout mặc định có thể được override theo API backend.
+
+`virtual_mode=True` bảo vệ đường dẫn công cụ file; `inherit_env=False` chặn kế thừa khóa trong môi trường shell. Tuy nhiên shell vẫn có quyền truy cập host: kiểm chứng chỉ đọc một file tổng hợp bên ngoài thư mục gốc để xác nhận giới hạn này, không truy cập file bí mật. Thư mục tạm bảo vệ bản workspace gốc khỏi sửa nhầm trong luồng bình thường; backend này không cung cấp cô lập tiến trình/hệ điều hành. Giới hạn được xác nhận trong mã phiên bản đã cài và [tài liệu LocalShellBackend chính thức](https://reference.langchain.com/python/deepagents/backends/local_shell/LocalShellBackend).
+
+Log tool dùng callback có khóa để nhận sự kiện từ các worker chạy đồng thời. Trạng thái `completed` nghĩa là công cụ đã trả kết quả; Python exit code khác 0 hoặc checker không đạt vẫn phải đọc từ output. Exception có trạng thái `error`, chỉ ghi loại lỗi và thông báo chung, không ghi nguyên văn exception. Input/output log giới hạn 10.000 ký tự mỗi trường; sự kiện chưa có callback kết thúc giữ `running`, không được suy diễn thành thành công. Trường `tool_calls` và cách đo token theo RUBRIC được giữ nguyên.
+
+| Nhóm kiểm chứng trong `report/verify_tool_integration.py` | Kết quả |
+|---|---|
+| Backend: môi trường, file UTF-8/đường dẫn chung, input lỗi, traversal/symlink, stdout/stderr/exit code, timeout, output dài, giới hạn shell | **8/8 đạt** |
+| Hợp tác sync/async trên artifact đúng: explorer → implementer → reviewer | **2/2 đạt**, checker 3/3, điểm 1,0 |
+| Hợp tác sync/async khi fixture cố ý sửa sai tổng trong artifact | **2/2 đạt** vì phát hiện lỗi, checker 2/3, điểm 0,666… |
+| Runner với artifact đúng/sai: chấm điểm, worker error, 8 log tool có thời gian và 6 sự kiện handoff, JSON đã lưu | **2/2 đạt** |
+| Tổng ca kiểm chứng tools/hợp tác | **14/14 đạt**, exit code 0 |
+
+Fixture và tuyến gọi model được điều khiển bằng script ngoại tuyến; công cụ, database, artifact và checker thực thi thật. Điểm trên là điểm của fixture tổng hợp, không phải tác vụ học/đánh giá của lab hay bằng chứng chất lượng Groq. File/checker tổng hợp chỉ nằm trong thư mục tạm; bản ghi được tự dọn và không ghi vào `results/`. Không sinh skill, không đóng băng hay chạy lại benchmark trong bước tích hợp tools.
 
 ## 6. Self-evolving: skill do curator sinh (Phần 3)
 
@@ -286,3 +315,15 @@ Lệnh chạy trong WSL tại gốc repo. Script kiểm chứng bỏ hai biến 
 Kết quả thực tế: **14/14 ca giao tiếp đạt**, exit code 0. Sau thay đổi cuối, toàn bộ suite có **30 passed, 2 failed in 87,62s**; hai lỗi vẫn là TODO `curate_skills` tại `src/lab/curator.py:71`. Trước khi thêm xử lý lỗi, ca worker timeout gây TimeoutError làm graph dừng; sau thay đổi ca này đạt ở cả sync và async. Kiểm chứng log cũng đã tái hiện `KeyError: communications` trước khi bổ sung ghi sự kiện và đạt sau thay đổi.
 
 Commit cục bộ cho bước này: `8c19d4d` (protocol worker/context isolation), `4bc0aff` (xử lý và ghi lỗi worker), `8ee731f` (log request/reply). Không chạy lại API, không sửa bản ghi benchmark cũ và không tạo skill thủ công. Các bản ghi cũ được giữ với đúng source revision tại thời điểm chạy, nên chưa có hai trường log mới; chỉ các lần chạy bằng mã mới mới có chúng.
+
+### Kiểm chứng tích hợp tools và hợp tác
+
+```bash
+.venv/bin/python report/verify_tool_integration.py
+.venv/bin/python report/verify_worker_communication.py
+.venv/bin/python -m pytest -v
+```
+
+Kiểm chứng tools/hợp tác đạt **14/14**, kiểm chứng worker/giao tiếp đạt **14/14** sau khi thêm log tool. Suite gốc sau thay đổi backend/runner: **30 passed, 2 failed in 68,19s**; hai lỗi là TODO curator chưa triển khai. Không có file `tests/test_04_tools.py` để khẳng định “4 passed” như ví dụ tham khảo.
+
+Commit cục bộ: `0b53801` (giới hạn output và kiểm chứng backend), `7884033` (log cả tool trong worker và kiểm chứng lỗi). Cấu hình output mới chỉ áp dụng các lượt chạy bằng revision mới; không sửa hay tái gán cấu hình cho 11 bản ghi Groq lịch sử. Hai script ngoại tuyến truyền model trực tiếp và không cung cấp usage token giả.
