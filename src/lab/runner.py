@@ -100,6 +100,7 @@ def run_task(task_id: str, condition: str, results_dir="results", model=None, re
             record["model"] = getattr(task_model, "model_name", type(task_model).__name__)
             record["temperature"] = getattr(task_model, "temperature", None)
             record["max_input_tokens"] = (task_model.profile or {}).get("max_input_tokens")
+            record["max_output_tokens"] = getattr(task_model, "max_tokens", None)
             record["recursion_limit"] = recursion_limit
             started = time.perf_counter()
             # Keep the last emitted state so an API or recursion error retains its trace.

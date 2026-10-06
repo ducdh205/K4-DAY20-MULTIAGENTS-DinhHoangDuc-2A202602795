@@ -89,6 +89,15 @@ def build_agent(sandbox: Path, mode: str = "single", use_skills: bool = False, m
             raise ValueError("LAB_MAX_INPUT_TOKENS must be positive")
         # Provider request limits may be smaller than the advertised context window.
         model.profile = {**(model.profile or {}), "max_input_tokens": limit}
+    output_limit = os.getenv("LAB_MAX_OUTPUT_TOKENS")
+    if output_limit:
+        limit = int(output_limit)
+        if limit <= 0:
+            raise ValueError("LAB_MAX_OUTPUT_TOKENS must be positive")
+        # OpenAI-compatible clients expose this field; other supplied models
+        # keep their own output-budget interface.
+        if "max_tokens" in type(model).model_fields:
+            model.max_tokens = limit
 
     backend = make_backend(sandbox)
     kwargs = {}
@@ -102,7 +111,7 @@ def build_agent(sandbox: Path, mode: str = "single", use_skills: bool = False, m
             SummarizationMiddleware(
                 model=model.model_copy(update={"max_tokens": 768}),
                 backend=backend,
-                trigger=("fraction", 0.5),
+                trigger=("fraction", 0.7),
                 keep=("messages", 1),
                 trim_tokens_to_summarize=None,
             ),
