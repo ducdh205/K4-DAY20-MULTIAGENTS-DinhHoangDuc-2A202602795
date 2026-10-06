@@ -3,6 +3,7 @@
 Pseudo-code: guides/pseudocode/01_agent.md
 Kiểm tra:    pytest tests/test_02_agent.py
 """
+import os
 import sys
 from pathlib import Path
 
@@ -78,6 +79,15 @@ def build_agent(sandbox: Path, mode: str = "single", use_skills: bool = False, m
     if mode not in {"single", "subagents"}:
         raise ValueError(f"Unknown agent mode: {mode}")
 
+    model = model if model is not None else make_model()
+    context_limit = os.getenv("LAB_MAX_INPUT_TOKENS")
+    if context_limit:
+        limit = int(context_limit)
+        if limit <= 0:
+            raise ValueError("LAB_MAX_INPUT_TOKENS must be positive")
+        # Provider request limits may be smaller than the advertised context window.
+        model.profile = {**(model.profile or {}), "max_input_tokens": limit}
+
     kwargs = {}
     prompt = BASE_PROMPT
     if mode == "subagents":
@@ -91,7 +101,7 @@ def build_agent(sandbox: Path, mode: str = "single", use_skills: bool = False, m
         prompt += SKILLS_NOTE
 
     return create_deep_agent(
-        model=model if model is not None else make_model(),
+        model=model,
         system_prompt=prompt,
         backend=make_backend(sandbox),
         **kwargs,
