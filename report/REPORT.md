@@ -1,6 +1,6 @@
 # Báo cáo Lab: Self evolving Agentic
 
-Trạng thái: đã hoàn thành Phần 0 và mã harness của Phần 1 theo `README.md` và `GUIDE.md`. Các test Phần 0–1 đạt 30/30; hai test curator còn thất bại do TODO của Phần 3. Phần 2 chưa hoàn tất: batch dừng sau hai lượt baseline do hạn mức token ngày của Groq; bốn lượt còn lại chưa chạy. Không có kết quả benchmark hoàn tất để kết luận về chất lượng.
+Trạng thái: đã hoàn thành Phần 0 và mã harness của Phần 1 theo `README.md` và `GUIDE.md`; worker và giao tiếp sync/async đã qua 14 ca kiểm chứng ngoại tuyến. Các test Phần 0–1 đạt 30/30; hai test curator còn thất bại do TODO của Phần 3 trong repo. Phần 2 chưa hoàn tất: batch dừng sau hai lượt baseline do hạn mức token ngày của Groq; bốn lượt còn lại chưa chạy. Không có kết quả benchmark hoàn tất để kết luận về chất lượng.
 
 ## 1. Thông tin nhóm và cấu hình
 
@@ -8,7 +8,7 @@ Trạng thái: đã hoàn thành Phần 0 và mã harness của Phần 1 theo `R
 |---|---|---|
 | Đinh Hoàng Đức | 2A202602795 | Thực hành cá nhân; chuẩn bị môi trường và báo cáo. |
 
-- Nhà cung cấp: Groq, endpoint tương thích OpenAI `https://api.groq.com/openai/v1`; cấu hình hiện tại là `LAB_MODEL=qwen/qwen3.8-27b`, `LAB_TEMPERATURE=0`, `LAB_MAX_INPUT_TOKENS=7000`, `LAB_MAX_OUTPUT_TOKENS=900`. Phần 0 dùng `openai/gpt-oss-20b`; các lượt chẩn đoán đã thử cả 20b, 120b và Qwen. Sáu lượt học hiện tại đặt `recursion_limit=20` để giới hạn chi phí; giá trị mặc định của runner vẫn là 60. Timeout mỗi lệnh shell là 120 giây.
+- Nhà cung cấp của các lượt đã lưu: Groq, endpoint tương thích OpenAI `https://api.groq.com/openai/v1`; cấu hình batch học là `LAB_MODEL=qwen/qwen3.8-27b`, `LAB_TEMPERATURE=0`, `LAB_MAX_INPUT_TOKENS=7000`, `LAB_MAX_OUTPUT_TOKENS=900`. Phần 0 dùng `openai/gpt-oss-20b`; các lượt chẩn đoán đã thử cả 20b, 120b và Qwen. Batch dự kiến sáu lượt học đặt `recursion_limit=20` để giới hạn chi phí; giá trị mặc định của runner vẫn là 60. Timeout mỗi lệnh shell là 120 giây.
 - Môi trường: Windows với Ubuntu trên WSL2, Python 3.12.3 trong `.venv`; chạy trực tiếp trong WSL, không dùng Docker. Kernel: `6.6.87.2-microsoft-standard-WSL2`.
 - Phiên bản đã cài: `deepagents==0.7.21`, `lab-deepagents==0.1.0`; `pip show` xác nhận lab được cài editable từ thư mục repo.
 - Có 11 lượt tác vụ thật: 9 lượt chẩn đoán tại `results/attempts/` và 2 lượt batch học tại `results/baseline/`; cả 11 đều có `error`. Tổng usage ghi nhận **271.755 token**; tổng thời gian các lượt **1.747,6 giây**. Kiểm tra kết nối riêng dùng thêm 101 token; tour/test ngoại tuyến không tốn token. Bảng chi tiết ở mục 7 và phụ lục.
@@ -49,7 +49,7 @@ Về cấu trúc lab: chế độ `single` có tác tử chính và subagent m�
 | Handoff | Lời gọi `task` truyền mô tả công việc và `subagent_type`; subagent trả báo cáo cuối, sau đó quyền xử lý trở về tác tử chính. |
 | LangGraph | `create_deep_agent` trả graph đã biên dịch; runner dùng `stream_mode="values"` để giữ trạng thái cuối đã phát ra khi có lỗi. |
 | Guardrail | `recursion_limit=60`; timeout shell 120 giây; `inherit_env=False`; sandbox tạm ngoài repo được tự dọn; `skills_modified` phát hiện thay đổi skill. Không có retry tác vụ tự động làm tăng token mà không được ghi nhận. |
-| Trace | `trace.md` lưu luồng chính và kết quả công cụ; `run.json` lưu UTC timestamp, điểm/check, token, thời gian, lỗi, số lần giao việc và hash skill. Token cộng cả subagent; tool call chỉ đếm luồng chính. |
+| Trace | `trace.md` lưu luồng chính và kết quả công cụ; bản ghi mới thêm `communications` cho ID và request/reply, `worker_errors` cho báo cáo lỗi worker. `run.json` tiếp tục lưu UTC timestamp, điểm/check, token, thời gian và hash skill. Token cộng cả subagent; tool call chỉ đếm luồng chính. |
 | Benchmark | Ba điều kiện do repo định nghĩa: `baseline`, `subagents`, `skills-auto`. Phần 2 chỉ đo ba tác vụ học; tập đánh giá chờ viết giả thuyết và đóng băng skill ở Phần 4. |
 
 Backend shell không kế thừa biến môi trường của tiến trình cha: chỉ nhận `PATH`, `HOME` trỏ sandbox và `PYTHONDONTWRITEBYTECODE`. Cả tác tử chính và subagent đều nhận quy ước đường dẫn tương đối từ prompt có sẵn. Khác với sơ đồ shared state tổng quát, ngữ cảnh hội thoại của subagent mặc định không chia sẻ toàn bộ; coordinator phải gửi đầy đủ yêu cầu khi giao việc.
@@ -68,6 +68,60 @@ Chưa xác định nhóm lỗi chiếm đa số hoặc hiệu quả skill. Nhữ
 
 - Các subagent đã định nghĩa: `explorer` đọc đặc tả/code/dữ liệu và báo cáo bằng chứng, không sửa file; `implementer` thực hiện yêu cầu rõ ràng, giữ nguyên test có sẵn và tự kiểm tra; `reviewer` kiểm chứng độc lập output theo yêu cầu, không sửa file. Tách ba vai trò để coordinator có thể chọn bước điều tra, thực hiện hoặc kiểm chứng phù hợp.
 - Ba lượt điều kiện `subagents` chưa chạy vì batch dừng ở hạn mức ngày. Chưa thể đánh giá nội dung giao việc, kiểm chứng báo cáo worker hoặc so sánh token/thời gian với baseline. Hai lượt baseline có `subagent_calls=0`; số này không đại diện cho điều kiện `subagents`.
+
+### Worker và giao tiếp theo kiến trúc của repo
+
+Tài liệu tham khảo “Phần 3: Worker Agents & Communication” mô tả các tệp `src/agents/*`, `src/communication/message_queue.py` và `tests/test_03_workers.py`. Repo này định nghĩa worker trong `src/lab/subagents.py`, sử dụng graph Deep Agents và công cụ `task`. Phần worker thuộc Phần 1–2 của GUIDE; Phần 3 trong repo là curator. Theo RUBRIC, mã harness được triển khai trong các hàm TODO; bản này hoàn thiện giao tiếp qua API framework đang dùng.
+
+| Thành phần tham khảo | Thành phần đang dùng | Trách nhiệm và công cụ |
+|---|---|---|
+| Data worker | `explorer` | Đọc đặc tả và mẫu CSV/JSON/log; dùng Python qua `execute` để tính dữ liệu lớn, trả insight và bằng chứng. Prompt yêu cầu không sửa file. |
+| Code worker | `implementer` | Dùng công cụ file và `execute` để sửa code, tạo output và chạy kiểm chứng; giữ nguyên test có sẵn. |
+| Evaluator worker | `reviewer` | Kiểm tra artifact và test output theo yêu cầu; nêu kiểm tra chưa thực hiện; không tự bịa điểm chất lượng. Prompt yêu cầu không sửa file. |
+| Vòng xử lý BaseWorker | Graph của từng subagent | Deep Agents quản lý model/tool loop; graph cung cấp `invoke` và `ainvoke`. Các worker đặt `mode="isolated"`, chỉ nhận nội dung giao việc. |
+| Truyền và nhận message | `task` và `ToolMessage` | `subagent_type` chọn worker; `description` mang yêu cầu, đường dẫn và quy tắc; `tool_call_id` liên kết báo cáo với đúng lời gọi, kể cả nhiều worker chạy đồng thời. |
+| Log giao tiếp | `run.json.communications` | Mỗi sự kiện có `type`, `id`, `from`, `to`, `timestamp`, `content`; phản hồi có `tool_status`. Timestamp là thời điểm runner quan sát state, UTC, không phải thời điểm bắt đầu/kết thúc nội bộ worker. |
+
+Worker dùng các công cụ file/shell được framework cấp; phạm vi vai trò được hướng dẫn bằng prompt, chưa khóa quyền ghi theo từng worker. Repo không có kết nối SQL hoặc phụ thuộc pandas: worker được hướng dẫn dùng thư viện đã cài hoặc standard library. Shell tiếp tục dùng backend chung với timeout 120 giây và môi trường không kế thừa khóa API.
+
+Prompt của ba worker yêu cầu báo cáo JSON gồm `status`, `result`, `files_changed`, `checks`, `errors`. Mỗi check nêu `check`, `passed`, `evidence`; check chưa thực hiện dùng `null`. Đây là hợp đồng trong prompt, chưa ép toàn bộ schema bằng structured output. Runner chấp nhận báo cáo dạng text để tương thích subagent mặc định, và nhận diện báo cáo JSON có `status="error"`.
+
+Trong chế độ `subagents`, `ToolErrorMiddleware` chuyển các lỗi ValueError/FileNotFoundError/PermissionError/TimeoutError từ lời gọi `task` thành `ToolMessage(status="error")` với đúng ID, loại lỗi và thông báo ngắn; không đưa nguyên văn exception nội bộ vào báo cáo. Lỗi provider đã chuẩn hóa và lỗi RuntimeError không bị đổi thành thành công: chúng tiếp tục được runner ghi vào `error`. Middleware không tự retry. Cách xử lý sync/async theo API [ToolErrorMiddleware của LangChain](https://reference.langchain.com/python/langchain/agents/middleware/tool_error/ToolErrorMiddleware).
+
+Runner lưu báo cáo worker lỗi trong `worker_errors`, gồm `tool_call_id`, tên worker và report. Cả lỗi giao việc và lỗi do worker tự báo đều đánh dấu bản ghi có `error`; coordinator vẫn có thể nhận kết quả worker khác. Mọi lỗi được giữ lại, kể cả khi coordinator tiếp tục, nên không xem một lượt có lỗi worker là lượt thực thi sạch chỉ vì có artifact. Khi graph dừng trước phản hồi, `communications` giữ yêu cầu đã quan sát; mỗi sự kiện chỉ ghi một lần dù stream lặp lại lịch sử.
+
+Luồng được kiểm chứng ngoại tuyến:
+
+```mermaid
+sequenceDiagram
+    participant C as Coordinator
+    participant D as explorer
+    participant I as implementer
+    participant R as reviewer
+    par Phân tích dữ liệu
+        C->>D: task id=k1, description
+        D-->>C: ToolMessage tool_call_id=k1, report
+    and Tạo và kiểm tra file
+        C->>I: task id=k2, description
+        I-->>C: ToolMessage tool_call_id=k2, report
+    end
+    C->>R: task id=k3, đường dẫn và tiêu chí kiểm tra
+    R-->>C: ToolMessage tool_call_id=k3, report
+```
+
+Diagram mô tả ca kiểm chứng; model thật vẫn tự quyết định worker và thứ tự giao việc. Kết quả kiểm chứng sau đây xác nhận cơ chế giao tiếp, không chứng minh chất lượng xử lý tác vụ của Groq.
+
+| Ca kiểm chứng ngoại tuyến | Kết quả |
+|---|---|
+| Sync và async: hai worker bắt đầu đồng thời, tạo file/đếm dòng bằng công cụ thật, reviewer đọc artifact, trả đúng ba ID | 2/2 đạt |
+| Sync và async: một worker timeout; trả lỗi đúng ID, giữ artifact và báo cáo worker còn lại; ẩn marker exception nội bộ | 2/2 đạt |
+| Sync và async: worker tự trả JSON lỗi; coordinator nhận đúng report và kết quả worker khác | 2/2 đạt |
+| Sync và async: RuntimeError tiếp tục được chuyển lên caller | 2/2 đạt |
+| Sync và async: ModelRateLimitError tiếp tục được chuyển lên caller | 2/2 đạt |
+| Runner: timeout, JSON lỗi, thành công, provider lỗi; kiểm tra log request/reply hoặc request còn chờ, UTC timestamp và file JSON đã lưu | 4/4 đạt |
+| Tổng | **14/14 đạt, exit code 0** |
+
+Các model trong kiểm chứng là model điều khiển kịch bản ngoại tuyến, được ghi rõ trong [verify_worker_communication.py](verify_worker_communication.py). Công cụ file/shell thực thi thật trong thư mục tạm ngoài repo; model và lỗi provider là dữ liệu kiểm thử. Các bản ghi kiểm thử nằm trong thư mục tạm và được dọn, không ghi vào `results/`, không cộng token giả vào benchmark. Không sửa test/workspace có sẵn, không gọi Groq cho bước này.
 
 ## 6. Self-evolving: skill do curator sinh (Phần 3)
 
@@ -218,3 +272,17 @@ for condition in ["baseline", "subagents"]:
 ```
 
 Cấu hình không chứa khóa lưu cạnh từng lượt chính trong `configuration.json`; source revision của cả hai lượt là `4e0c7b0`. Không chỉnh sửa `run.json` hoặc `trace.md` để thay đổi số liệu. `report/table.md` sinh bằng `lab.compare.main()` qua stdout redirection, tương đương `python -m lab.compare > report/table.md`. `scripts/check_breakdown.py` chạy exit code 0; chưa chạy `verify_freeze.py` vì chưa có bước đóng băng.
+
+### Kiểm chứng worker và giao tiếp
+
+```bash
+.venv/bin/python -m pytest tests/test_02_agent.py -v
+.venv/bin/python report/verify_worker_communication.py
+.venv/bin/python -m pytest -v
+```
+
+Lệnh chạy trong WSL tại gốc repo. Script kiểm chứng bỏ hai biến ngân sách tùy chọn trong môi trường của chính tiến trình kiểm thử, không sửa `.env`, và truyền model ngoại tuyến trực tiếp vào graph/runner. Phiên bản framework kiểm chứng: `deepagents==0.7.21`, `langchain==1.4.3`, `langchain-core==1.6.6`.
+
+Kết quả thực tế: **14/14 ca giao tiếp đạt**, exit code 0. Sau thay đổi cuối, toàn bộ suite có **30 passed, 2 failed in 87,62s**; hai lỗi vẫn là TODO `curate_skills` tại `src/lab/curator.py:71`. Trước khi thêm xử lý lỗi, ca worker timeout gây TimeoutError làm graph dừng; sau thay đổi ca này đạt ở cả sync và async. Kiểm chứng log cũng đã tái hiện `KeyError: communications` trước khi bổ sung ghi sự kiện và đạt sau thay đổi.
+
+Commit cục bộ cho bước này: `8c19d4d` (protocol worker/context isolation), `4bc0aff` (xử lý và ghi lỗi worker), `8ee731f` (log request/reply). Không chạy lại API, không sửa bản ghi benchmark cũ và không tạo skill thủ công. Các bản ghi cũ được giữ với đúng source revision tại thời điểm chạy, nên chưa có hai trường log mới; chỉ các lần chạy bằng mã mới mới có chúng.
