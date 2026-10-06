@@ -1,0 +1,13 @@
+{
+  "source_revision": "4e0c7b0",
+  "model": "qwen/qwen3.8-27b",
+  "temperature": 0,
+  "max_input_tokens": 7000,
+  "max_output_tokens": 900,
+  "recursion_limit": 20,
+  "summary_trigger_fraction": 0.7,
+  "summary_keep_messages": 1,
+  "summary_max_output_tokens": 768,
+  "tool_result_token_limit": 500,
+  "purpose": "authorized learning run; identical configuration across intended six runs"
+}

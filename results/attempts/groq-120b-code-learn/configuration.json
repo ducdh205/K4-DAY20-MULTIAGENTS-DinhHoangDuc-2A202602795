@@ -1,0 +1,9 @@
+{
+  "provider": "Groq",
+  "model": "openai/gpt-oss-120b",
+  "temperature": 0,
+  "recursion_limit": 60,
+  "max_input_tokens": null,
+  "source_revision": "dd16b3a",
+  "purpose": "Archived API failure; excluded from main comparison"
+}

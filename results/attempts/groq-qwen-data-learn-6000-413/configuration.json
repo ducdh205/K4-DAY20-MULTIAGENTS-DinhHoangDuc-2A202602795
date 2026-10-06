@@ -1,0 +1,9 @@
+{
+  "provider": "Groq",
+  "model": "qwen/qwen3.8-27b",
+  "temperature": 0,
+  "recursion_limit": 60,
+  "max_input_tokens": 6000,
+  "source_revision": "a93efab",
+  "purpose": "Archived API failure; excluded from main comparison"
+}

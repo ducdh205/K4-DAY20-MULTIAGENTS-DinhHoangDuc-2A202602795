@@ -1,0 +1,10 @@
+{
+  "model": "qwen/qwen3.8-27b",
+  "temperature": 0,
+  "max_input_tokens": 4500,
+  "recursion_limit": 60,
+  "source_revision": "00de89b",
+  "condition": "baseline",
+  "task": "data-learn",
+  "purpose": "infrastructure diagnosis; excluded from benchmark comparison"
+}

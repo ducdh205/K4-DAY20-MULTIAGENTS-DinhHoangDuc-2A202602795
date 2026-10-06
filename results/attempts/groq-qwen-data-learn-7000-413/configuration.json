@@ -1,0 +1,11 @@
+{
+  "model": "qwen/qwen3.8-27b",
+  "temperature": 0,
+  "max_input_tokens": 7000,
+  "recursion_limit": 60,
+  "source_revision": "ecb5583",
+  "summary_trigger_fraction": 0.5,
+  "summary_keep_messages": 1,
+  "summary_max_output_tokens": 768,
+  "purpose": "infrastructure diagnosis; excluded from benchmark comparison"
+}
