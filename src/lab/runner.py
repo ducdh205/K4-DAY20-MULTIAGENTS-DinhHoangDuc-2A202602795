@@ -83,7 +83,48 @@ def run_task(task_id: str, condition: str, results_dir="results", model=None, re
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "error": None,
         "communications": [],
+        "tool_executions": [],
     }
+    from threading import Lock
+    from langchain_core.callbacks import BaseCallbackHandler
+
+    class ToolExecutionLog(BaseCallbackHandler):
+        def __init__(self):
+            self.active = {}
+            self.lock = Lock()
+
+        def on_tool_start(self, serialized, input_str, *, run_id, parent_run_id=None, **kwargs):
+            event = {
+                "id": str(run_id),
+                "parent_id": str(parent_run_id) if parent_run_id else None,
+                "name": (serialized or {}).get("name", "unknown"),
+                "input": str(input_str)[:10000],
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "status": "running", "seconds": None,
+            }
+            with self.lock:
+                record["tool_executions"].append(event)
+                self.active[run_id] = (event, time.perf_counter())
+
+        def finish(self, run_id, status, output):
+            with self.lock:
+                pending = self.active.pop(run_id, None)
+                if pending is None:
+                    return
+                event, started = pending
+                event.update(status=status, output=str(output)[:10000],
+                             seconds=round(time.perf_counter() - started, 6))
+
+        def on_tool_end(self, output, *, run_id, **kwargs):
+            # Completed means the tool returned; command/check failures remain
+            # in its output and must not be mistaken for successful validation.
+            status = "error" if getattr(output, "status", None) == "error" else "completed"
+            self.finish(run_id, status, getattr(output, "content", output))
+
+        def on_tool_error(self, error, *, run_id, **kwargs):
+            self.finish(run_id, "error", f"{type(error).__name__}: tool execution failed")
+
+    tool_log = ToolExecutionLog()
     usage = UsageMetadataCallbackHandler()
     messages = []
     observed_requests = {}
@@ -109,7 +150,7 @@ def run_task(task_id: str, condition: str, results_dir="results", model=None, re
             # Keep the last emitted state so an API or recursion error retains its trace.
             for state in agent.stream(
                 {"messages": [{"role": "user", "content": task.instruction}]},
-                config={"callbacks": [usage], "recursion_limit": recursion_limit},
+                config={"callbacks": [usage, tool_log], "recursion_limit": recursion_limit},
                 stream_mode="values",
             ):
                 messages = state.get("messages", messages)

@@ -154,6 +154,11 @@ def verify_error_record(failure):
         saved = json.loads((Path(folder) / "subagents/data-learn/run.json").read_text())
         assert saved["worker_errors"] == record["worker_errors"]
         assert saved["communications"] == communication
+        events = saved["tool_executions"]
+        assert len(events) == 1 and events[0]["name"] == "task"
+        assert events[0]["status"] == ("error" if failure in {"timeout", "provider"} else "completed")
+        assert events[0]["seconds"] >= 0 and events[0]["parent_id"]
+        assert datetime.fromisoformat(events[0]["timestamp"]).utcoffset().total_seconds() == 0
         assert "PRIVATE-EXCEPTION-MARKER" not in json.dumps(saved)
     print(f"PASS runner {failure}: correlated communication log and honest error state saved in temporary directory")
 
