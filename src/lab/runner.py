@@ -16,6 +16,7 @@ from langchain_core.messages import AIMessage, ToolMessage
 
 from .agent import build_agent
 from .grading import grade                                                      # có sẵn
+from .model import make_model
 from .tasks import ROOT, get_task, hash_dir, list_tasks, prepare_sandbox         # có sẵn
 
 # Ba điều kiện thí nghiệm (condition). `skills_dir` là thư mục skill nguồn (tính từ thư mục gốc của lab).
@@ -92,9 +93,14 @@ def run_task(task_id: str, condition: str, results_dir="results", model=None, re
         try:
             prepare_sandbox(task, sandbox, skills_dir)
             before = hash_dir(sandbox / "skills")
+            task_model = model if model is not None else make_model()
             agent = build_agent(
-                sandbox, mode=cfg["mode"], use_skills=skills_dir is not None, model=model,
+                sandbox, mode=cfg["mode"], use_skills=skills_dir is not None, model=task_model,
             )
+            record["model"] = getattr(task_model, "model_name", type(task_model).__name__)
+            record["temperature"] = getattr(task_model, "temperature", None)
+            record["max_input_tokens"] = (task_model.profile or {}).get("max_input_tokens")
+            record["recursion_limit"] = recursion_limit
             started = time.perf_counter()
             # Keep the last emitted state so an API or recursion error retains its trace.
             for state in agent.stream(
@@ -116,6 +122,10 @@ def run_task(task_id: str, condition: str, results_dir="results", model=None, re
             )
         }
         calls = [call for msg in messages if isinstance(msg, AIMessage) for call in msg.tool_calls]
+        record["main_model_usage"] = [
+            msg.usage_metadata for msg in messages
+            if isinstance(msg, AIMessage) and msg.usage_metadata
+        ]
         record["tool_calls"] = len(calls)
         record["subagent_calls"] = sum(call["name"] == "task" for call in calls)
         skills_read = set()
