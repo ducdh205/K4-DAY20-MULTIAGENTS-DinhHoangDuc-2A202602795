@@ -2,11 +2,15 @@
 
 Trạng thái: mã harness và curator đã hoàn thiện; **32/32 test gốc đạt**, 35 nhóm kiểm chứng bổ sung đạt, statement coverage toàn bộ `src/lab` **90,58%**. Đã đo lặp ba lần trên fixture ngoại tuyến và tải 10 yêu cầu độc lập. Benchmark Groq vẫn chưa hoàn tất: hai lượt thử mới gặp quota phút/ngày, chưa có lượt tác vụ học thực thi hoàn tất để kết luận chất lượng. Chưa sinh skill chính thức hoặc đóng băng/chạy tập đánh giá.
 
+Danh mục toàn bộ kết quả đã lưu: [RESULTS_INDEX.md](RESULTS_INDEX.md). Trạng thái từng yêu cầu nộp bài và phần còn thiếu: [SUBMISSION_CHECKLIST.md](SUBMISSION_CHECKLIST.md). Các phép đo trong báo cáo được thực hiện ngày 06/10/2026; lần đối chiếu và hoàn thiện tài liệu ngày 07/10/2026 không gọi thêm API.
+
 ## 1. Thông tin nhóm và cấu hình
 
 | Họ tên | Mã sinh viên | Phần đóng góp |
 |---|---|---|
-| Đinh Hoàng Đức | 2A202602795 | Thực hành cá nhân; chuẩn bị môi trường và báo cáo. |
+| Đinh Hoàng Đức | 2A202602795 | Thực hành cá nhân: môi trường, harness/worker/curator, kiểm chứng, thí nghiệm và báo cáo. |
+
+**Bài toán và phạm vi.** Xây harness Deep Agents xử lý ba họ công việc code/data/logs; so sánh `baseline`, `subagents` và `skills-auto` bằng check độc lập, token và thời gian. Mục tiêu self-evolving là để curator học quy trình từ phản hồi tác vụ học rồi đánh giá chuyển giao trên dữ liệu khác sau freeze. Phạm vi mã là các hàm TODO trong bốn module `src/lab`; dùng bộ chấm có sẵn, giữ dữ liệu gốc và lưu record/trace để kiểm toán. Phần hiện hoàn thành gồm mã và kiểm chứng ngoại tuyến; thí nghiệm model mới chỉ có các lượt bị lỗi được lưu nguyên trạng.
 
 - Nhà cung cấp của các lượt đã lưu: Groq, endpoint tương thích OpenAI `https://api.groq.com/openai/v1`; cấu hình batch học là `LAB_MODEL=qwen/qwen3.8-27b`, `LAB_TEMPERATURE=0`, `LAB_MAX_INPUT_TOKENS=7000`, `LAB_MAX_OUTPUT_TOKENS=900`. Phần 0 dùng `openai/gpt-oss-20b`; các lượt chẩn đoán đã thử cả 20b, 120b và Qwen. Batch dự kiến sáu lượt học đặt `recursion_limit=20` để giới hạn chi phí; giá trị mặc định của runner vẫn là 60. Timeout mỗi lệnh shell là 120 giây.
 - Môi trường: Windows với Ubuntu trên WSL2, Python 3.12.3 trong `.venv`; chạy trực tiếp trong WSL, không dùng Docker. Kernel: `6.6.87.2-microsoft-standard-WSL2`.
@@ -26,7 +30,7 @@ Các dự đoán dưới đây được viết trước khi chạy hoặc xem đ
 - H2 (skills-auto so với baseline): dự đoán `skills-auto` đạt điểm đánh giá tổng thể cao nhất trong ba điều kiện **nếu** curator sinh được skill đúng, tổng quát và agent đọc/làm theo. Lợi ích dự kiến tập trung ở quy ước đã xuất hiện trong feedback học, không bảo đảm đạt quy ước mới. [Tài liệu Skills của LangChain](https://docs.langchain.com/oss/python/deepagents/skills) mô tả nạp metadata trước rồi đọc hướng dẫn khi phù hợp; cơ chế này hỗ trợ tái dùng quy trình nhưng không chứng minh skill tự sinh đúng. Nếu `skills_read=0` hoặc skill sai, dự đoán lợi ích không xuất hiện.
 - H3 (tác vụ học so với tác vụ đánh giá): dự đoán điểm trung bình `skills-auto` trên tác vụ học cao hơn trên tác vụ đánh giá, vì [README mục 2.2](../README.md) nêu tập đánh giá đổi dữ liệu và thêm quy ước mới. Quy trình xử lý/kiểm chứng tổng quát có thể chuyển sang dữ liệu khác; skill ghi chi tiết riêng của bài học có thể quá khớp. Kiểm chứng bằng điểm kỹ thuật/quy ước và vết sau freeze, đồng thời so hai lượt học của cùng bộ skill để không quy mọi chênh lệch cho khả năng tổng quát hóa.
 
-Mục này được lưu trong commit riêng có thông điệp `hypotheses`; chưa tạo tag `freeze`, vì phần học và skill chính thức còn thiếu. Thứ tự giả thuyết → freeze → đánh giá vẫn phải được kiểm tra bằng công cụ của repo khi hoàn tất thí nghiệm.
+Mục này được lưu trong commit `102da2b` có thông điệp `hypotheses`; chưa tạo tag `freeze`, vì phần học và skill chính thức còn thiếu. Thứ tự giả thuyết → freeze → đánh giá vẫn phải được kiểm tra bằng công cụ của repo khi hoàn tất thí nghiệm.
 
 ## 3. Làm quen Deep Agents (Phần 0.3)
 
@@ -39,9 +43,29 @@ Kết quả dưới đây lấy từ `scripts/tour.py` với `ScriptedChatModel`
    - Từ `task`: “Launch an ephemeral subagent to handle a complex, multi-step task.” — giao một tác vụ phức tạp, nhiều bước cho subagent tạm thời.
    - Từ `execute`: “Quote paths containing spaces (e.g. cd \"/path/with spaces\").” — đặt đường dẫn có dấu cách trong dấu nháy khi chạy shell.
 
-Về cấu trúc lab: chế độ `single` có tác tử chính và subagent mặc định `general-purpose`; chế độ `subagents` thêm `explorer`, `implementer`, `reviewer`. `curator` là bước gọi mô hình riêng để sinh skill từ phản hồi tác vụ học, không phải worker được `task` gọi. Đã cài đặt `get_subagents`, `make_backend`, `build_agent`, `run_task`; `curate_skills` còn là TODO của Phần 3.
+Về cấu trúc lab: chế độ `single` có tác tử chính và subagent mặc định `general-purpose`; chế độ `subagents` thêm `explorer`, `implementer`, `reviewer`. `curator` là bước gọi mô hình riêng để sinh skill từ phản hồi tác vụ học, không phải worker được `task` gọi. Đã cài đặt cả năm hàm `get_subagents`, `make_backend`, `build_agent`, `run_task`, `curate_skills`.
 
 ### Kiến trúc điều phối đã cài đặt
+
+```mermaid
+flowchart TD
+    T[Đề bài học và workspace gốc] --> R[run_task: bản sao tạm, callback, usage]
+    R --> C[build_agent: tác tử chính / LangGraph]
+    C <--> M[Model: Groq khi chạy thật]
+    C -->|task + mô tả đầy đủ| G[general-purpose]
+    C -->|chế độ subagents| W[explorer / implementer / reviewer]
+    C --> F[Công cụ file và execute]
+    G --> F
+    W --> F
+    F <--> S[LocalShellBackend và sandbox tạm]
+    R --> Q[grade: check trên bản sao đã xử lý]
+    Q --> O[run.json và trace.md]
+    O -. chỉ feedback học dùng được .-> K[curate_skills: parse và validate]
+    K -. chưa có đầu ra chính thức .-> A[skills/auto]
+    A -. điều kiện skills-auto .-> C
+```
+
+Các nét đứt là bước đã có mã nhưng chưa thực hiện bằng model thật trong thí nghiệm hiện tại. Bộ chấm thuộc runner, không phải điểm tự báo của reviewer; curator chạy sau lượt học, không nằm trong vòng điều phối worker.
 
 | Khái niệm | Ánh xạ vào repo |
 |---|---|
@@ -58,7 +82,7 @@ Backend shell không kế thừa biến môi trường của tiến trình cha: 
 
 ## 4. Đường cơ sở và phân loại lỗi (Phần 2.2)
 
-> Chỉ dùng tác vụ học. Mỗi dòng là một check thất bại.
+Chỉ phân loại chất lượng từ tác vụ học; lượt bị lỗi thực thi được ghi riêng và không gán check thiếu output vào taxonomy A–G.
 
 | Tác vụ | Check thất bại | Nhóm lỗi (A-G) | Bằng chứng (trích ngắn từ `detail` hoặc vết) |
 |---|---|---|---|
@@ -199,13 +223,35 @@ Kiểm chứng driver còn tái hiện lỗi không dừng ở tên exception `O
 
 `report/debug_runs.py` phân tích 13 bản ghi thật: 8 lỗi request/context/transport của provider, 4 rate limit và 1 GraphRecursionError; tổng 288.649 token/1.929,6 giây, không có tác vụ thành công. [learning-debug.json](performance/learning-debug.json) giữ số tool chính, số tool trong vết, handoff còn chờ và lỗi worker nếu có. Những bản ghi lịch sử chưa có log tool mới không bị sửa để thêm số liệu. Chưa thể xếp lỗi hạ tầng vào taxonomy chất lượng tác tử hay tính điểm/token có ý nghĩa từ tập này.
 
+### Quyết định triển khai và khả năng phục hồi
+
+| Quyết định | Lý do | Đánh đổi / giới hạn đã xác định |
+|---|---|---|
+| Dùng graph và `task` của framework | Đúng kiến trúc/TODO của repo; ID liên kết lời gọi và báo cáo | Ngữ cảnh worker cô lập; coordinator phải truyền đủ đường dẫn/quy tắc. Chưa có message broker, queue bền vững hoặc failover. |
+| JSON report trong prompt, giữ text tương thích | Reviewer nêu check và bằng chứng; subagent mặc định vẫn trả text được | Chưa cưỡng chế schema. Runner ghi lỗi worker bảo thủ ngay cả khi có artifact tiếp theo. |
+| Bản sao tạm và môi trường shell tối thiểu | Giữ workspace gốc; không kế thừa khóa API | File tool được chặn traversal; shell chưa cô lập khỏi host và chưa có hạn mức RAM/CPU. |
+| Log callback có khóa, giữ state stream cuối | Nhìn được tool bên trong worker và giữ phần vết khi graph lỗi | Timestamp handoff là lúc quan sát; log cắt 10.000 ký tự, không thay vết hệ thống đầy đủ. |
+| Curator bỏ lượt có execution error | Tránh sinh hướng dẫn chất lượng từ output thiếu vì quota | Hiện không có feedback dùng được, nên chưa sinh skill; phải chạy lại học trước. |
+| Driver dừng ở lỗi provider, SDK retry bằng 0 | Giới hạn chi phí và giữ lỗi đo được | Pacing 60 giây tăng thời gian chờ; chưa xử lý được quota ngày hay tạo lượt hoàn tất. |
+
+| Loại lỗi / edge case | Phát hiện và xử lý | Bằng chứng / phạm vi |
+|---|---|---|
+| Tool input/file/path lỗi | Backend trả lỗi; middleware `task` chuyển lỗi cho coordinator với đúng ID | Kiểm chứng file thiếu, edit mismatch, command trống, traversal và symlink đạt. |
+| Shell timeout / exit khác 0 | Giữ exit code/output; giới hạn mặc định 120 giây mỗi lệnh | Ca timeout override 1 giây trả 124; chưa có timeout tổng cho một run thật. |
+| Worker timeout / tự báo JSON lỗi | `worker_errors` và `error` được lưu; phản hồi worker khác vẫn có thể nhận | Sync/async đạt; không tự đổi worker hoặc retry. |
+| Runtime/provider exception | Chuyển tới runner; giữ record lỗi, state cuối và usage đã nhận | Ca kiểm chứng ngoại tuyến đạt; 13 lỗi Groq/graph thật giữ riêng. |
+| Graph lặp | Giới hạn recursion; ghi `GraphRecursionError` | `data-learn` dừng ở limit 20; không được xem là tác vụ thành công. |
+| Curator nhận block/input sai | Lọc role/error, parse/validate có sẵn, giới hạn cap và đường dẫn | 2 test gốc và 4 nhóm bổ sung đạt; validator là kiểm tra cấu trúc, không bảo đảm nội dung model đúng. |
+
+Các cơ chế này giúp lỗi được quan sát và chi phí bị chặn theo từng giới hạn, chưa chứng minh phục hồi hoàn toàn. Không tự gán điểm resilience từ test đạt hoặc thêm số retry/timeout không tồn tại trong mã.
+
 ## 6. Self-evolving: skill do curator sinh (Phần 3)
 
 - `curate_skills` đã triển khai và đạt test; chưa chạy curator bằng model thật, chưa sinh/xóa/sửa tay skill chính thức. Bảng này chờ các lượt học có feedback dùng được; lượt có execution error bị lọc để tránh học từ lỗi quota.
 
 | Skill | Tổng quát hay riêng cho tác vụ học? | Đúng hay sai (nêu chỗ sai nếu có) | Độ dài, `description` và `skills_read` ở Phần 3.4 |
 |---|---|---|---|
-| | | | |
+| Chưa có skill chính thức | Chưa thể đánh giá | Chưa thể đánh giá | Curator bằng model thật: 0 lượt; skill xóa/sửa tay: 0; chưa chạy `skills-auto`. |
 
 ## 7. Kết quả so sánh (Phần 4.3, 4.4)
 
@@ -238,25 +284,40 @@ baseline      learn     0/12         0/6           48,040      0/2
 
 ## 8. Phân tích
 
-> Trả lời từng câu bằng số liệu từ mục 7 và bằng chứng từ vết. Kết quả âm hoặc không có khác biệt vẫn hợp lệ nếu được phân tích tốt.
+1. **Điểm học và đánh giá:** chưa xác định điều kiện nào cải thiện. Bảng chính có hai lượt baseline 0/10 và 0/8 bị dừng, không có `subagents`/`skills-auto` hoặc điểm eval. Vì vậy chưa quan sát được cải thiện riêng ở tập học hay dấu hiệu quá khớp từ chênh lệch điểm.
+2. **Kỹ thuật và quy ước:** breakdown baseline học là 0/12 check kỹ thuật và 0/6 check `rule_`. Output thiếu sau lỗi thực thi không chứng minh lỗi chất lượng nào chiếm ưu thế. Chưa có skill hoặc check eval để xác định nhóm được giúp; không kết luận skill giải quyết quy ước mới.
+3. **Cơ chế dùng skill:** hai lượt chính có `skills_read=0`, vì baseline không nạp skill; số này không phải thất bại của cơ chế chọn skill. Chưa có check nào đạt nhờ skill để trích vết. Cần ghép skill đọc được, bước agent thực hiện và check tương ứng trong lượt `skills-auto` thật.
+4. **Chi phí:** mean token hai lượt baseline là 48.040 theo cách làm tròn của `lab.compare`; tổng mọi lượt Groq đã lưu là 288.649 token. Đây là chi phí đã phát sinh cho các lượt lỗi, chưa phải chi phí đạt lời giải. Không có đối chứng nên chưa xếp hạng điểm/token hoặc kết luận đa tác tử đáng chi phí. Vòng đọc CSV 13 tool call tiêu tốn 85.833 token mà chưa tạo output; chỉ giảm output/pacing chưa giải quyết được vòng đọc này.
+5. **Rò rỉ và quá khớp:** chưa có skill sinh thật nên chưa đánh giá được nội dung rò rỉ/quá khớp. Biện pháp đã cài gồm chọn `role=learn`, bỏ lượt lỗi, dùng validator cấm định danh eval, không sửa tay skill, và chưa đọc trực tiếp check/kết quả đánh giá trước freeze. Test lọc đầu vào xác nhận cơ chế, không chứng minh curator thật miễn nhiễm prompt injection hay paraphrase tên tác vụ.
+6. **Nhiễu:** chưa có cặp `skills-auto-dev` và sau freeze của cùng bộ skill; chênh lệch là chưa đo, không phải 0. Fixture ngoại tuyến có N=3 mỗi nhóm và N=10 burst nhưng dùng model kịch bản, nên không ước lượng nhiễu LLM. Hai lượt code Groq đổi pacing và đều bị chặn cũng không phải hai mẫu thành công có cùng điều kiện.
 
-Chưa đủ dữ liệu trả lời sáu câu so sánh dưới đây: không có lượt học thực thi hoàn tất, chưa có `subagents`/`skills-auto`, chưa chạy đánh giá hoặc đóng băng. Có thể kết luận giới hạn hiện tại của harness: lượt data dùng 85.833 token cho 13 tool call nhưng không tạo output; lượt code bị quota ngày chặn trước khi sửa/kiểm chứng. Không thể suy ra hiệu quả đa tác tử, skill, khả năng tổng quát hóa hoặc mức nhiễu từ hai lượt này.
+### Thiết kế so với thực tế
 
-1. So với `baseline`, điều kiện nào cải thiện điểm tác vụ **học**? Điều kiện nào cải thiện điểm tác vụ **đánh giá**? Có điều kiện nào cải thiện tác vụ học nhưng không cải thiện tác vụ đánh giá? Nếu có, đó là dấu hiệu gì?
-2. Tách điểm thành check kỹ thuật và check quy ước (`rule_`). Skill do curator sinh giúp nhóm check nào? Check quy ước **mới** của tác vụ đánh giá có được skill giúp không, và vì sao?
-3. Dựa vào vết và `skills_read`, giải thích một check mà skill giúp đạt và một check mà skill không giúp (skill chưa được đọc, đọc nhưng không làm theo, skill thiếu hoặc sai).
-4. Chi phí: so sánh số token trung bình giữa các điều kiện. Điều kiện nào có hiệu quả tốt nhất theo điểm trên mỗi token? Đa tác tử có đáng chi phí trong thí nghiệm này không?
-5. Có dấu hiệu rò rỉ dữ liệu hoặc quá khớp nào trong skill sinh ra không? Nhóm đã phòng tránh như thế nào?
-6. Nhiễu: so sánh điểm tác vụ học của cùng bộ skill ở Phần 3.4 (đã sao lưu) và sau đóng băng. Chênh lệch bao nhiêu? Nó cho biết điều gì về độ tin cậy của các chênh lệch trong bảng ở mục 7?
+| Mục tiêu trong repo | Thực tế quan sát | Hệ quả |
+|---|---|---|
+| Harness, subagent và curator chạy đúng API | 32/32 test gốc, 35 nhóm bổ sung đạt; coverage 90,58% | Có bằng chứng mã và cơ chế ngoại tuyến, chưa có bằng chứng lời giải model thật. |
+| Sáu tác vụ × ba điều kiện trong bảng cuối | Bảng chính mới có 2 baseline học; 11 lượt chẩn đoán ở thư mục riêng | Bảng so sánh chưa hoàn tất; không trộn các lượt khác cấu hình để lấp chỗ thiếu. |
+| Skill học từ lỗi rồi chuyển sang dữ liệu khác | Curator đã cài; chưa có feedback dùng được hay skill chính thức | H1–H3 chưa kiểm chứng; chưa tạo freeze/eval. |
+| Đo chi phí và kiểm chứng bằng vết | Record thật có usage/check/trace; bản mới thêm log worker/tool | Phân biệt token toàn graph với số tool call luồng chính và lỗi hạ tầng với chất lượng. |
+| Kiểm soát chi phí chạy | Recursion, output, timeout và driver cap/dừng provider hoạt động | Quota phút/ngày vẫn chặn; chưa có SLA thành công để đối chiếu. |
+
+Repo không đặt mục tiêu latency/throughput/coverage theo các số ví dụ của tài liệu tham khảo; không hồi tố các số đó thành cam kết ban đầu.
+
+### Khả năng mở rộng
+
+- **Nhiều yêu cầu độc lập:** kiểm chứng 10 graph đồng thời tạo sandbox riêng, 10/10 đạt; đây là burst ngoại tuyến. Chạy thật cần admission control theo quota chung; thêm worker không tự tăng token/phút hoặc token/ngày của tài khoản.
+- **Nhiều worker trong một tác vụ:** model có thể giao nhiều lời gọi `task`; log dùng khóa và ID để tránh ghép nhầm. Worker chia sẻ artifact cùng sandbox, nên giao việc sửa cùng file có thể xung đột; cần phân quyền sở hữu file hoặc serialize bước ghi trước khi tăng fan-out.
+- **Dữ liệu lớn:** phân trang file giảm nội dung đưa vào model; tính bulk bằng script trong `execute` rồi gửi thống kê nhỏ. File vẫn đầy đủ, nhưng stdout hiện thu trước khi cắt và không có RAM limit; cần đo RAM/CPU và output lớn trước khi tăng tải.
+- **Nhiều tiến trình/máy:** hiện chưa có broker/checkpoint bền vững, phục hồi khi process chết hoặc điều phối phân tán. Nếu cần, dùng worker chạy trong container và đường dẫn kết quả riêng theo request; kiểm chứng retry/idempotency và chi phí trước khi công bố khả năng scale.
 
 ## 9. Hạn chế và tính hợp lệ
-
-> Nêu ít nhất 3 hạn chế và ảnh hưởng của từng hạn chế đến kết luận (ví dụ: chỉ 3 tác vụ mỗi vai trò, mỗi cấu hình chạy một lần, nhiễu của mô hình, tác vụ do giảng viên thiết kế sẵn quy ước, chỉ một mô hình).
 
 1. Hạn mức Groq thực tế thấp hơn cửa sổ ngữ cảnh quảng bá: phản hồi API ghi giới hạn 7.000 token đầu vào/phút, 1.000 token đầu ra/phút và 200.000 token/ngày. Đổi khóa không bảo đảm tăng hạn mức; lỗi hạ tầng làm các lượt không đủ điều kiện để kết luận về chất lượng tác tử.
 2. Quá trình chẩn đoán đã thay model và policy ngữ cảnh. Không so sánh trực tiếp các lượt khác cấu hình; giữ riêng bản ghi cũ và không lựa chọn lại lượt chỉ vì điểm thấp.
 3. Token counter của middleware là ước lượng. Tóm tắt và phân trang có thể làm mất chi tiết trong ngữ cảnh mô hình hoặc khiến tác tử đọc lặp, dù file gốc không đổi. Chi phí token gồm cả tóm tắt và subagent; trace chỉ thể hiện luồng chính.
 4. Tập học chỉ có ba tác vụ; chưa chạy curator, chưa đóng băng và chưa có kết quả đánh giá. Chưa thể suy ra khả năng tổng quát hóa, quá khớp hoặc lợi ích của skill.
+5. Fixture model kịch bản loại bỏ latency và sai sót quyết định của LLM; sample nhỏ và burst ngắn không chứng minh P99/throughput duy trì. Chưa đo RAM, CPU hay utilization; coverage chỉ là statement coverage, còn 44 dòng chưa được đo.
+6. Shell dùng quyền host WSL; vai trò read-only của explorer/reviewer là chỉ dẫn prompt. Không thể coi kiểm chứng path/env là chứng nhận cô lập bảo mật hoặc sẵn sàng production.
 
 ## 10. Kết luận
 
@@ -288,7 +349,7 @@ Lệnh kiểm tra mô hình cuối là dạng rút gọn tương đương script
 | Kết nối qua `lab.model.make_model` | Trả lời `OK`; 74 token đầu vào, 27 token đầu ra, tổng 101 token. Đây là kiểm tra kết nối, chưa phải lần chạy tác vụ. |
 | Git bỏ qua cấu hình | `git check-ignore .env .venv` trả về cả hai đường dẫn; `git ls-files .env` không có kết quả. |
 
-- Thử thách mở rộng (nếu có): hướng chọn, kết quả, nhận xét.
+- Thử thách mở rộng: chưa thực hiện thí nghiệm bonus. Theo RUBRIC, chỉ tính điểm thưởng khi các hạng mục chính hoàn thành; hiện skill/freeze/eval còn thiếu. Đo tải 10 graph và regression curator là kiểm chứng bổ sung, không được ghi thành bonus pooling/red-team đã hoàn tất.
 - Ghi chú: làm theo tài liệu của repo: test Phần 0 có 15 test và mục 3 trả lời ba câu về Deep Agents trong `GUIDE.md`, thay vì số test/câu hỏi của bản tham khảo. Không đọc trực tiếp check hoặc kết quả tác vụ đánh giá để chuẩn bị skill; chưa chạy thí nghiệm hoặc tạo tag `freeze`.
 
 ### Kiểm chứng mã điều phối và runner
@@ -304,7 +365,7 @@ Kết quả thực tế: test định nghĩa subagent đạt 1/1; toàn bộ `te
 
 Đã đối chiếu với commit gốc `ad29c55`: `tests/`, `tasks/`, `scripts/` và các module có sẵn không thay đổi. So sánh AST xác nhận nguyên vẹn bốn hằng số prompt trong `agent.py`, cùng `CONDITIONS`, `render_trace`, `main` trong `runner.py`.
 
-Commit cục bộ: `6825b08` (subagent), `4fdd8ad` (backend/agent), `dd16b3a` (runner), `a93efab` (profile ngữ cảnh), `00de89b` (metadata model/usage), `ecb5583` (tóm tắt giới hạn đầu ra), `79c3e87` (phân trang tool result), `4e0c7b0` (giới hạn đầu ra chính và ghi cấu hình). Chưa push.
+Các commit giai đoạn đầu: `6825b08` (subagent), `4fdd8ad` (backend/agent), `dd16b3a` (runner), `a93efab` (profile ngữ cảnh), `00de89b` (metadata model/usage), `ecb5583` (tóm tắt giới hạn đầu ra), `79c3e87` (phân trang tool result), `4e0c7b0` (giới hạn đầu ra chính và ghi cấu hình). Revision của mỗi phép đo được ghi riêng; trạng thái nộp hiện tại xem checklist.
 
 Lệnh chạy thật đầu tiên bị bộ xét duyệt tự động từ chối trước khi thực thi vì cần ủy quyền rõ ràng cho việc gửi payload benchmark tới Groq. Sau đó người dùng đã xác nhận cho phép sáu lượt học (baseline/subagents trên ba tác vụ). Lệnh bị từ chối không được tính là lần chạy API.
 
@@ -397,3 +458,11 @@ Lệnh provider đã chạy sau khi người dùng cấp quyền 18 lượt:
 ```
 
 Hai lệnh provider trên dùng token và gửi file học tới Groq; không tự chạy lại khi chỉ tái lập phần ngoại tuyến. Mỗi lần tạo thư mục mới có timestamp, giữ configuration/manifest và raw record. Không có kết quả của 16 lượt chưa chạy. Commit harness tại thời điểm đo: `9b49902` (curator hoàn thiện); các helper thí nghiệm được phát triển trong working tree, điều kiện thực tế của từng lượt ghi trong configuration và bảng mục 5. Skill chính thức, tag freeze, dữ liệu benchmark cũ và test/tasks/scripts có sẵn không đổi.
+
+### Đối chiếu bản báo cáo ngày 07/10/2026
+
+```bash
+.venv/bin/python report/audit_submission.py
+```
+
+Audit ngoại tuyến đạt: 13 record học thật, 288.649 token/1.929,6 giây; bảng từ `lab.compare` khớp `table.md` và mục 7, coverage khớp 423/467, log chứa 32 test gốc và 35 nhóm kiểm chứng bổ sung. Danh mục [RESULTS_INDEX.md](RESULTS_INDEX.md) liên kết từng run/trace; [submission-audit.json](performance/submission-audit.json) giữ hash raw và kết quả kiểm tra. So sánh Git/AST xác nhận các phần có sẵn nguyên vẹn; Git WSL dùng cùng clean filter CRLF của checkout Windows, không sửa config hay file. Kiểm tra liên kết cục bộ đạt và quét mẫu credential không tìm thấy khóa; `.env` không được tracked. Audit không đọc trực tiếp nội dung eval, không gọi API và không xác nhận phần freeze chưa thực hiện. Quota trong báo cáo là phản hồi lịch sử của các lượt đã lưu, không phải kiểm tra hạn mức khả dụng ngày 07/10.

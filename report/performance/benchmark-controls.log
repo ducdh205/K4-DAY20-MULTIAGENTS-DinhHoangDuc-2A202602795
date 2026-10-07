@@ -1,0 +1,12 @@
+Provider benchmark output: results/performance/groq-20261007T024854639018Z
+1 baseline code-learn: 0/1, tokens=0, seconds=0, error_type=OpenAIInvalidRequestError
+Provider/infrastructure failure; inspect the saved run.json before resuming.
+PASS benchmark control: OpenAIInvalidRequestError: offline simulated HTTP 400, cap=17, interval=60; no API or persistent simulated results
+Provider benchmark output: results/performance/groq-20261007T024854641243Z
+1 baseline code-learn: 0/1, tokens=0, seconds=0, error_type=OpenAIRateLimitError
+Provider/infrastructure failure; inspect the saved run.json before resuming.
+PASS benchmark control: OpenAIRateLimitError: offline simulated HTTP 429, cap=17, interval=60; no API or persistent simulated results
+Provider benchmark output: results/performance/groq-20261007T024854643271Z
+1 baseline code-learn: 0/1, tokens=0, seconds=0, error_type=None
+1 baseline data-learn: 0/1, tokens=0, seconds=0, error_type=None
+PASS benchmark control: cap, cap=2, interval=0; no API or persistent simulated results
