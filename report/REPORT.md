@@ -20,11 +20,13 @@ Policy giới hạn ngữ cảnh chỉ bật khi đặt `LAB_MAX_INPUT_TOKENS`: 
 
 ## 2. Giả thuyết (commit TRƯỚC tag `freeze`, Phần 4.0)
 
-> Dự đoán điều kiện nào đạt điểm cao nhất trên **tác vụ đánh giá** và vì sao. Nêu căn cứ từ phân loại lỗi (mục 4) và từ tài liệu tham khảo. Điền cả ba dòng; `verify_freeze.py` kiểm tra điều này.
+Các dự đoán dưới đây được viết trước khi chạy hoặc xem điểm đánh giá; chưa được kiểm chứng. Mục 4 chưa có taxonomy lỗi chất lượng dùng được, nên căn cứ hiện tại là thiết kế repo, tài liệu framework và vòng đọc lặp quan sát trên tác vụ học. Chỉ đối chiếu các lượt có cùng cấu hình và không có lỗi thực thi; báo cáo riêng số lượt bị chặn.
 
-- H1 (subagents so với baseline):
-- H2 (skills-auto so với baseline):
-- H3 (tác vụ học so với tác vụ đánh giá):
+- H1 (subagents so với baseline): dự đoán `subagents` có điểm kỹ thuật trung bình trên tập đánh giá cao hơn `baseline`, nhưng dùng nhiều token hơn do giao việc và kiểm chứng. Việc cô lập phần điều tra có thể giảm ngữ cảnh trung gian, còn reviewer có thể phát hiện output thiếu; tuy nhiên giao việc thiếu thông tin hoặc quota có thể làm lợi ích biến mất. Đây là suy luận từ cơ chế cô lập và chuyên môn hóa trong [tài liệu Subagents của LangChain](https://docs.langchain.com/oss/python/deepagents/subagents), chưa phải kết quả của lab.
+- H2 (skills-auto so với baseline): dự đoán `skills-auto` đạt điểm đánh giá tổng thể cao nhất trong ba điều kiện **nếu** curator sinh được skill đúng, tổng quát và agent đọc/làm theo. Lợi ích dự kiến tập trung ở quy ước đã xuất hiện trong feedback học, không bảo đảm đạt quy ước mới. [Tài liệu Skills của LangChain](https://docs.langchain.com/oss/python/deepagents/skills) mô tả nạp metadata trước rồi đọc hướng dẫn khi phù hợp; cơ chế này hỗ trợ tái dùng quy trình nhưng không chứng minh skill tự sinh đúng. Nếu `skills_read=0` hoặc skill sai, dự đoán lợi ích không xuất hiện.
+- H3 (tác vụ học so với tác vụ đánh giá): dự đoán điểm trung bình `skills-auto` trên tác vụ học cao hơn trên tác vụ đánh giá, vì [README mục 2.2](../README.md) nêu tập đánh giá đổi dữ liệu và thêm quy ước mới. Quy trình xử lý/kiểm chứng tổng quát có thể chuyển sang dữ liệu khác; skill ghi chi tiết riêng của bài học có thể quá khớp. Kiểm chứng bằng điểm kỹ thuật/quy ước và vết sau freeze, đồng thời so hai lượt học của cùng bộ skill để không quy mọi chênh lệch cho khả năng tổng quát hóa.
+
+Mục này được lưu trong commit riêng có thông điệp `hypotheses`; chưa tạo tag `freeze`, vì phần học và skill chính thức còn thiếu. Thứ tự giả thuyết → freeze → đánh giá vẫn phải được kiểm tra bằng công cụ của repo khi hoàn tất thí nghiệm.
 
 ## 3. Làm quen Deep Agents (Phần 0.3)
 
