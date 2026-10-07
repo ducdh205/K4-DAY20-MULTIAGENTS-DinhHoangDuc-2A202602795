@@ -90,6 +90,27 @@ Chỉ phân loại chất lượng từ tác vụ học; lượt bị lỗi th�
 
 Chưa xác định nhóm lỗi chiếm đa số hoặc hiệu quả skill. Những check báo thiếu output sau lỗi API phản ánh việc thực thi bị dừng, chưa chứng minh tác tử bỏ qua đặc tả hay báo cáo sai. Với `data-learn`, vết cho thấy đã đọc README và đọc lặp hai phần CSV, không gọi `write_file`/`execute`; guardrail dừng trước khi có `answer.json` và `clean.csv`. Đây là bằng chứng về vòng lặp của cấu hình hiện tại; không gán tất cả check thiếu file cho một lỗi kỹ thuật dữ liệu cụ thể. Cần tách ảnh hưởng của tóm tắt và ngân sách khỏi chất lượng tác tử trước khi kết luận. Thống kê thô 0/12 check kỹ thuật và 0/6 check quy ước ở mục 7 không được dùng làm bằng chứng phủ định A–D vì cả hai lượt đều bị dừng.
 
+### Tổng hợp các lượt thật đã lưu
+
+Bảng dưới cộng usage của toàn bộ 13 lượt, gồm chẩn đoán khác cấu hình; dùng để kiểm toán chi phí, không dùng thay cho so sánh ba điều kiện. Số tool call chỉ thuộc luồng chính, theo trường `tool_calls` của từng record.
+
+<!-- BEGIN REAL-RUN-SUMMARY -->
+| Tác vụ | Lượt có lỗi / đã chạy | Input token | Output token | Tổng token | Tổng giây | Tool call chính |
+|---|---:|---:|---:|---:|---:|---:|
+| code-learn | 4/4 | 26.602 | 540 | 27.142 | 269,6 | 19 |
+| data-learn | 8/8 | 233.744 | 19.600 | 253.344 | 1.587,4 | 45 |
+| logs-learn | 1/1 | 8.042 | 121 | 8.163 | 72,6 | 3 |
+| **Tổng** | **13/13** | **268.388** | **20.261** | **288.649** | **1.929,6** | **67** |
+
+| Nhóm lỗi thực thi | Số lượt | Tỷ lệ trong 13 lượt |
+|---|---:|---:|
+| provider-request-or-transport | 8 | 61.54% |
+| provider-rate-limit | 4 | 30.77% |
+| graph-iteration-limit | 1 | 7.69% |
+<!-- END REAL-RUN-SUMMARY -->
+
+Tất cả 13 lượt có `subagent_calls=0` và `skills_read=0`; chưa có lượt model thật của điều kiện `subagents` hoặc `skills-auto`. Danh mục [RESULTS_INDEX.md](RESULTS_INDEX.md) có từng record/trace và toàn bộ 18 check raw của hai baseline chính. Các nhóm lỗi thực thi được tổng hợp riêng: request/context/transport, rate limit và recursion limit; không gán chúng vào nhóm lỗi chất lượng A–G.
+
 ## 5. Điều kiện `subagents` (Phần 2.3)
 
 - Các subagent đã định nghĩa: `explorer` đọc đặc tả/code/dữ liệu và báo cáo bằng chứng, không sửa file; `implementer` thực hiện yêu cầu rõ ràng, giữ nguyên test có sẵn và tự kiểm tra; `reviewer` kiểm chứng độc lập output theo yêu cầu, không sửa file. Tách ba vai trò để coordinator có thể chọn bước điều tra, thực hiện hoặc kiểm chứng phù hợp.
@@ -196,6 +217,8 @@ Theo README/RUBRIC, không thêm hay sửa `tests/` và `scripts/` có sẵn. Kh
 | Ca complex riêng dưới cProfile | Đạt, output profiling được lưu riêng |
 
 Log đầy đủ ở [performance/verification.log](performance/verification.log); coverage đo bằng `coverage==7.16.2`, lưu [coverage-summary.json](performance/coverage-summary.json) và [coverage.json](performance/coverage.json). Lần chạy pytest thứ hai phục vụ đo coverage, đồng thời chạy ba script regression ngoại tuyến. Test chậm nhất ở lượt bình thường là kiểm tra workspace chưa sửa không đạt điểm tối đa (15,83 giây); số liệu này thuộc bộ test, không phải latency API.
+
+[performance/test-results.md](performance/test-results.md) trình bày số test theo từng tệp, đủ 35 nhóm kiểm chứng bổ sung, coverage từng module và bảng latency từ summary đã lưu. `visible_suite_passes` của tác vụ `code-learn` ghi “2 failed, 4 passed in 3.04s” là suite bên trong workspace tác vụ, khác với suite harness 32/32 đạt; không cộng hoặc tráo hai kết quả này.
 
 **Đo harness ngoại tuyến.** Dữ liệu CSV/SQLite, script và artifact đều thực thi thật; quyết định gọi công cụ được model kịch bản điều khiển. Nhóm simple chạy script đã có, nhóm code tạo script rồi chạy, nhóm complex giao việc qua ba worker. Mỗi request được chấm ba check fixture bằng grader có sẵn. Timer cho lượt tuần tự bao gồm `run_task` (chuẩn bị bản sao, dựng graph, thực thi, chấm và lưu), loại thời gian dựng fixture nguồn/import; tải đồng thời bao gồm cả dựng fixture và graph, nên không dùng hai phép đo để suy ra speedup trực tiếp.
 

@@ -18,6 +18,7 @@
 | Freeze và eval chính thức | Còn thiếu | Chưa tạo tag; chưa chạy đánh giá. Chưa có kết quả `verify_freeze.py` OK. |
 | Bảng ba điều kiện/sáu tác vụ | Còn thiếu | [table.md](table.md) đúng với dữ liệu hiện có nhưng mới có hai baseline học. |
 | Báo cáo 10 mục, hạn chế, lệnh tái lập | Đã hoàn thiện cho dữ liệu hiện có | [REPORT](REPORT.md), [danh mục bằng chứng](RESULTS_INDEX.md). Phân tích nêu rõ câu hỏi chưa thể kết luận. |
+| Điền số liệu từ record/log vào report | Có dữ liệu đối chiếu trực tiếp | REPORT và RESULTS_INDEX có usage theo tác vụ, 67 tool call chính và phân bố lỗi; index giữ 18 check raw baseline. [Test report](performance/test-results.md) có suite, coverage từng module và latency từ summary. |
 | Bonus theo GUIDE | Chưa thực hiện | Chỉ tính sau hạng mục chính; không nhận đo tải fixture là bonus pooling hoặc lặp eval. |
 | `.env` riêng tư; phần có sẵn nguyên vẹn | Audit ngoại tuyến | [submission-audit.json](performance/submission-audit.json): Git ignore, không tracked `.env`, đối chiếu protected files/AST với `ad29c55`, quét mẫu credential mà không in nội dung. |
 | Push GitHub | Đã thực hiện | Bản báo cáo Phần 6 tại commit `0047f33` đã push lên `origin/main`; `.env` không nằm trong lịch sử Git. |
@@ -66,4 +67,4 @@ git diff --check
 git status --short
 ```
 
-Audit chỉ đối chiếu bằng chứng đã lưu; không gọi mô hình, không đọc trực tiếp check/kết quả eval trước freeze, không sửa raw records. Lệnh kiểm chứng đầy đủ và đo coverage đã thực thi được ghi trong phụ lục REPORT; không cần chạy API để xem bản nộp.
+Audit đối chiếu bằng chứng đã lưu và điền các bảng được đánh dấu trong REPORT/test-results cùng RESULTS_INDEX; không gọi mô hình, không đọc trực tiếp check/kết quả eval trước freeze, không sửa raw records. Lệnh kiểm chứng đầy đủ và đo coverage đã thực thi được ghi trong phụ lục REPORT; không cần chạy API để xem bản nộp.

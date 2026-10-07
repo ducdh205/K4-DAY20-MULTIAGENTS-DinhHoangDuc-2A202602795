@@ -1,6 +1,6 @@
 {
   "kind": "offline-existing-evidence-audit",
-  "source_revision": "0047f33f57f7db8b0987420258c2b9e2b235b001",
+  "source_revision": "22a2336c8b7a69b052a355ec8e137c7bc5e9c167",
   "api_calls": 0,
   "real_learning_runs": 13,
   "errored_runs": 13,
@@ -44,5 +44,43 @@
     "results/performance/groq-20261006T152116351268Z/iteration-1/baseline/code-learn/trace.md": "f16b56f3d16a4d882bba95f99726cde3d765e87bb20d805fc62c392d2e3d9b4e",
     "results/performance/groq-20261006T152443668368Z/iteration-1/baseline/code-learn/run.json": "55271009620dbeb66a95b998b32329d221c067698473320d6869846f79d7ebee",
     "results/performance/groq-20261006T152443668368Z/iteration-1/baseline/code-learn/trace.md": "dc1aad48e60613ed21450f88f2df8b222d6a80670215a8abd960f5cf072e408b"
-  }
+  },
+  "real_runs_by_task": [
+    {
+      "task": "code-learn",
+      "runs": 4,
+      "errored": 4,
+      "input": 26602,
+      "output": 540,
+      "total": 27142,
+      "seconds": 269.6,
+      "main_tool_calls": 19,
+      "subagent_calls": 0,
+      "skills_read": 0
+    },
+    {
+      "task": "data-learn",
+      "runs": 8,
+      "errored": 8,
+      "input": 233744,
+      "output": 19600,
+      "total": 253344,
+      "seconds": 1587.4,
+      "main_tool_calls": 45,
+      "subagent_calls": 0,
+      "skills_read": 0
+    },
+    {
+      "task": "logs-learn",
+      "runs": 1,
+      "errored": 1,
+      "input": 8042,
+      "output": 121,
+      "total": 8163,
+      "seconds": 72.6,
+      "main_tool_calls": 3,
+      "subagent_calls": 0,
+      "skills_read": 0
+    }
+  ]
 }

@@ -1,7 +1,8 @@
 """Audit existing learning evidence and report links offline; never call a model.
 
 Run from the repository root: .venv/bin/python report/audit_submission.py
-Writes an evidence index and audit metadata, without altering raw results.
+Fills marked report sections, an evidence index and audit metadata from saved
+records, without altering raw results.
 This checks reporting integrity, not completion of freeze/evaluation requirements.
 """
 import ast
@@ -28,6 +29,23 @@ def git(*args):
     # Windows checkout uses CRLF; apply the same clean filter in WSL, without
     # changing config or files. Other content differences remain detectable.
     return subprocess.check_output(["git", "-c", "core.autocrlf=true", *args], cwd=ROOT, text=True, encoding="utf-8").strip()
+
+
+def cell(value):
+    return str(value).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("|", "\\|").replace("\n", " ").replace("\r", " ")
+
+
+def number(value, places=0):
+    return f"{value:,.{places}f}".replace(",", "_").replace(".", ",").replace("_", ".")
+
+
+def fill_recorded_section(path, marker, content):
+    text = path.read_text(encoding="utf-8")
+    start, end = f"<!-- BEGIN {marker} -->", f"<!-- END {marker} -->"
+    assert text.count(start) == text.count(end) == 1, path
+    before, remaining = text.split(start)
+    _, after = remaining.split(end)
+    path.write_text(before + start + "\n" + content + "\n" + end + after, encoding="utf-8")
 
 
 def main():
@@ -60,7 +78,8 @@ def main():
     assert table == (ROOT / "report/table.md").read_text(encoding="utf-8").strip()
     assert table in report
 
-    coverage = read_json(ROOT / "report/performance/coverage.json")["totals"]
+    coverage_record = read_json(ROOT / "report/performance/coverage.json")
+    coverage = coverage_record["totals"]
     assert (coverage["covered_lines"], coverage["num_statements"], coverage["missing_lines"]) == (423, 467, 44)
     assert math.isclose(coverage["percent_covered"], 100 * 423 / 467)
     verification = (ROOT / "report/performance/verification.log").read_text(encoding="utf-8")
@@ -85,6 +104,41 @@ def main():
     for sample in stress["samples"]:
         assert read_json(offline_path.parent / f"stress/request-{sample['request_id']}.json") == sample
     assert offline["profile_sample"]["success"]
+
+    groups = []
+    run_summary = ["| Tác vụ | Lượt có lỗi / đã chạy | Input token | Output token | Tổng token | Tổng giây | Tool call chính |", "|---|---:|---:|---:|---:|---:|---:|"]
+    for task in sorted({run["task"] for _, run in runs}):
+        rs = [run for _, run in runs if run["task"] == task]
+        group = {"task": task, "runs": len(rs), "errored": sum(bool(r.get("error")) for r in rs), "input": sum(r["tokens"]["input"] for r in rs), "output": sum(r["tokens"]["output"] for r in rs), "total": sum(r["tokens"]["total"] for r in rs), "seconds": round(sum(r["seconds"] for r in rs), 1), "main_tool_calls": sum(r["tool_calls"] for r in rs), "subagent_calls": sum(r["subagent_calls"] for r in rs), "skills_read": sum(r["skills_read"] for r in rs)}
+        groups.append(group)
+        values = [task, f"{group['errored']}/{group['runs']}", *[number(group[key]) for key in ("input", "output", "total")], number(group["seconds"], 1), group["main_tool_calls"]]
+        run_summary.append("| " + " | ".join(map(str, values)) + " |")
+    assert sum(g["total"] for g in groups) == tokens
+    assert all(g["subagent_calls"] == g["skills_read"] == 0 for g in groups)
+    run_summary.append(f"| **Tổng** | **{errored}/{len(runs)}** | **{number(sum(g['input'] for g in groups))}** | **{number(sum(g['output'] for g in groups))}** | **{number(tokens)}** | **{number(seconds, 1)}** | **{sum(g['main_tool_calls'] for g in groups)}** |")
+    categories = ["| Nhóm lỗi thực thi | Số lượt | Tỷ lệ trong 13 lượt |", "|---|---:|---:|"]
+    assert sum(debug["categories"].values()) == len(runs)
+    for name, count in debug["categories"].items():
+        categories.append(f"| {name} | {count} | {count / len(runs) * 100:.2f}% |")
+    recorded_summary = "\n".join(run_summary + [""] + categories)
+    fill_recorded_section(ROOT / "report/REPORT.md", "REAL-RUN-SUMMARY", recorded_summary)
+
+    details = ["### Suite và các nhóm kiểm chứng", "", "| Bộ kiểm chứng | Đạt | Nguồn |", "|---|---:|---|"]
+    for filename, count in (("test_01_provided.py", 15), ("test_02_agent.py", 9), ("test_03_runner.py", 6), ("test_04_curator.py", 2)):
+        assert f"tests/{filename} " + "." * count in verification
+        details.append(f"| `{filename}` | {count}/{count} | [verification.log](verification.log) |")
+    details += ["| Worker/giao tiếp bổ sung | 14/14 nhóm | [verification.log](verification.log) |", "| Tools/hợp tác bổ sung | 14/14 nhóm | [verification.log](verification.log) |", "| Curator bổ sung | 4/4 nhóm | [verification.log](verification.log) |", "| Driver benchmark bổ sung | 3/3 nhóm | [benchmark-controls.log](benchmark-controls.log) |", "", "Tổng suite gốc: 32 test đạt; kiểm chứng bổ sung: 35 nhóm đạt. Các nhóm bổ sung là ca chạy script, không đổi tên thành 35 test pytest. Suite model kịch bản không chứng minh chất lượng Groq.", "", "### Statement coverage từng module", "", "| Module | Statement đã đo / tổng | Coverage | Chưa đo |", "|---|---:|---:|---:|"]
+    for filename, record in sorted(coverage_record["files"].items()):
+        summary = record["summary"]
+        if summary["num_statements"]:
+            details.append(f"| `{Path(filename).name}` | {summary['covered_lines']}/{summary['num_statements']} | {summary['percent_covered']:.2f}% | {summary['missing_lines']} |")
+    details += ["| **Toàn bộ src/lab** | **423/467** | **90,58%** | **44** |", "", "Nguồn [coverage.json](coverage.json); `__init__.py` có 0 statement nên không tính là module có code được kiểm chứng. Không đo branch coverage.", "", "### Latency và tải đã thực thi", "", "| Fixture | Mẫu đạt / tổng | Min (s) | Max (s) | Avg (s) | P50 (s) | P99 mẫu (s) |", "|---|---:|---:|---:|---:|---:|---:|"]
+    for name, case in [*offline["cases"].items(), ("complex, 10 graph đồng thời", offline["stress"])]:
+        metrics = case["metrics"]
+        details.append(f"| {name} | {metrics['successes']}/{metrics['requests']} | " + " | ".join(f"{metrics[key]:.3f}" for key in ("min", "max", "avg", "p50", "p99_nearest_rank")) + " |")
+    metrics = offline["stress"]["metrics"]
+    details += ["", f"Burst 10 graph hoàn tất trong {metrics['elapsed_seconds']:.3f}s, tốc độ quy đổi {metrics['successful_requests_per_minute']:.2f} yêu cầu/phút. Không phải throughput duy trì hoặc throughput API; RAM/CPU và worker utilization chưa đo. P99 nearest rank với N=3/10 là max mẫu. Nguồn: [summary](offline-20261006T151924755263Z/summary.json), gồm raw record và ca profiling riêng.", "", "Fixture dùng model kịch bản, API call/token bằng 0; file/shell/SQLite/checker chạy thật. 13 lượt Groq có lỗi được liệt kê riêng trong [RESULTS_INDEX](../RESULTS_INDEX.md)."]
+    fill_recorded_section(ROOT / "report/performance/test-results.md", "RECORDED-TEST-RESULTS", "\n".join(details))
 
     protected = ["tests", "tasks", "scripts", *[f"src/lab/{name}.py" for name in ("model", "tasks", "grading", "testing", "compare")]]
     assert not git("diff", "--name-only", "ad29c55", "--", *protected)
@@ -123,12 +177,20 @@ def main():
         lines.append(f"| [{path.parent.relative_to(ROOT / 'results').as_posix()}](../{rel}) · [trace](../{path.with_name('trace.md').relative_to(ROOT).as_posix()}) | {run['task']} | {run['passed']}/{run['total']} | {run['tokens']['total']:,} | {run['seconds']:.1f} | {error_type} |")
         for raw in (path, path.with_name("trace.md")):
             hashes[raw.relative_to(ROOT).as_posix()] = hashlib.sha256(raw.read_bytes()).hexdigest()
-    lines += [f"| **Tổng: {len(runs)} lượt** | | | **{tokens:,}** | **{seconds:.1f}** | **{errored} có lỗi** |", "", "## Kiểm chứng và đo ngoại tuyến", "", "| Kết quả | Bằng chứng |", "|---|---|", "| Suite gốc 32 đạt; curator/worker/tools thêm 32 nhóm đạt | [verification.log](performance/verification.log), [lượt test trước đó](performance/test-results.md) |", "| Driver benchmark thêm 3 nhóm đạt | [benchmark-controls.log](performance/benchmark-controls.log) |", "| Statement coverage 423/467 = 90,58%; thiếu 44 dòng | [coverage.json](performance/coverage.json), [metadata](performance/coverage-summary.json) |", "| Simple/code/complex: 3 lần mỗi nhóm, 9/9 đạt | [summary và đường dẫn raw](performance/offline-20261006T151924755263Z/summary.json) |", "| Tải 10 graph độc lập: 10/10 đạt; không gọi API | [summary stress](performance/offline-20261006T151924755263Z/summary.json) |", "| Ca complex profiling đạt; 352.503 call trong 0,511s trên main thread | [profile.txt](performance/offline-20261006T151924755263Z/profile.txt) |", "| So sánh tạm: chỉ hai baseline học | [table.md](table.md) |", "", "Scripted model quyết định đường gọi; file/shell/SQLite/checker thực thi thật. Không dùng điểm fixture làm điểm Groq. Thử kết nối model riêng trả OK dùng 101 token, đã ghi ở phụ lục REPORT; không nằm trong 13 lượt tác vụ.", "", "## Tính toàn vẹn", "", "[submission-audit.json](performance/submission-audit.json) giữ SHA-256 của từng run/trace, kiểm tra bảng so sánh, coverage, liên kết và các phần có sẵn so với commit gốc. Audit không thay thế pytest, không chứng nhận freeze và không tự nộp bài.", ""]
+    lines += [f"| **Tổng: {len(runs)} lượt** | | | **{tokens:,}** | **{seconds:.1f}** | **{errored} có lỗi** |", "", "## Usage theo tác vụ và nhóm lỗi thực thi", "", "Cộng cả các lượt chẩn đoán khác cấu hình để kiểm toán usage; không dùng làm mean score của điều kiện.", "", recorded_summary, "", "## Check raw của hai baseline chính", "", "Check dưới đây được chấm sau khi lượt đã dừng ở quota/guardrail. Không phân loại chúng thành lỗi chất lượng A–G; `tests_not_modified=false` là check trong workspace tác vụ, không phải bằng chứng thư mục tests của repo đã bị sửa. Audit Git xác nhận các tệp có sẵn nguyên vẹn."]
+    for task in ("code-learn", "data-learn"):
+        raw_path = ROOT / "results/baseline" / task / "run.json"
+        raw = read_json(raw_path)
+        lines += ["", f"### {task}: {raw['passed']}/{raw['total']}", "", f"Nguồn: [run.json](../results/baseline/{task}/run.json), [trace](../results/baseline/{task}/trace.md). Detail trích tối đa 160 ký tự; xem bản gốc để đọc đầy đủ.", "", "| Check | Passed (raw) | Detail trích ngắn |", "|---|---|---|"]
+        for check in raw["checks"]:
+            lines.append(f"| `{cell(check['name'])}` | {str(check['passed']).lower()} | {cell(check['detail'][:160])} |")
+    lines += ["", "## Kiểm chứng và đo ngoại tuyến", "", "| Kết quả | Bằng chứng |", "|---|---|", "| Suite gốc 32 đạt; curator/worker/tools thêm 32 nhóm đạt | [verification.log](performance/verification.log), [lượt test trước đó](performance/test-results.md) |", "| Driver benchmark thêm 3 nhóm đạt | [benchmark-controls.log](performance/benchmark-controls.log) |", "| Statement coverage 423/467 = 90,58%; thiếu 44 dòng | [coverage.json](performance/coverage.json), [metadata](performance/coverage-summary.json) |", "| Simple/code/complex: 3 lần mỗi nhóm, 9/9 đạt | [summary và đường dẫn raw](performance/offline-20261006T151924755263Z/summary.json) |", "| Tải 10 graph độc lập: 10/10 đạt; không gọi API | [summary stress](performance/offline-20261006T151924755263Z/summary.json) |", "| Ca complex profiling đạt; 352.503 call trong 0,511s trên main thread | [profile.txt](performance/offline-20261006T151924755263Z/profile.txt) |", "| So sánh tạm: chỉ hai baseline học | [table.md](table.md) |", "", "Scripted model quyết định đường gọi; file/shell/SQLite/checker thực thi thật. Không dùng điểm fixture làm điểm Groq. Thử kết nối model riêng trả OK dùng 101 token, đã ghi ở phụ lục REPORT; không nằm trong 13 lượt tác vụ.", "", "## Tính toàn vẹn", "", "[submission-audit.json](performance/submission-audit.json) giữ SHA-256 của từng run/trace, kiểm tra bảng so sánh, coverage, liên kết và các phần có sẵn so với commit gốc. Audit không thay thế pytest, không chứng nhận freeze và không tự nộp bài.", ""]
     (ROOT / "report/RESULTS_INDEX.md").write_text("\n".join(lines), encoding="utf-8")
     audit = {"kind": "offline-existing-evidence-audit", "source_revision": git("rev-parse", "HEAD"), "api_calls": 0, "real_learning_runs": len(runs), "errored_runs": errored, "recorded_tokens": tokens, "recorded_seconds": seconds, "original_suite_passes": 32, "additional_verification_groups": 35, "offline_repeated_requests": 9, "offline_concurrent_requests": 10, "coverage_covered_statements": 423, "coverage_total_statements": 467, "protected_files_unchanged": True, "protected_ast_unchanged": True, "env_untracked_and_ignored": True, "credential_pattern_scanned_files": scanned, "freeze_exists": False, "raw_sha256": hashes}
     audit_path = ROOT / "report/performance/submission-audit.json"
+    audit["real_runs_by_task"] = groups
     audit_path.write_text(json.dumps(audit, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    for filename in ("REPORT.md", "SUBMISSION_CHECKLIST.md", "RESULTS_INDEX.md"):
+    for filename in ("REPORT.md", "SUBMISSION_CHECKLIST.md", "RESULTS_INDEX.md", "performance/test-results.md"):
         path = ROOT / "report" / filename
         for target in re.findall(r"\[[^\]]*\]\(([^)]+)\)", path.read_text(encoding="utf-8")):
             if target.startswith(("https://", "http://", "#")):
