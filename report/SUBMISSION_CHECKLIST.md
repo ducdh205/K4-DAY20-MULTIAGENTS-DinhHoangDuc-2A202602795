@@ -20,7 +20,16 @@
 | Báo cáo 10 mục, hạn chế, lệnh tái lập | Đã hoàn thiện cho dữ liệu hiện có | [REPORT](REPORT.md), [danh mục bằng chứng](RESULTS_INDEX.md). Phân tích nêu rõ câu hỏi chưa thể kết luận. |
 | Bonus theo GUIDE | Chưa thực hiện | Chỉ tính sau hạng mục chính; không nhận đo tải fixture là bonus pooling hoặc lặp eval. |
 | `.env` riêng tư; phần có sẵn nguyên vẹn | Audit ngoại tuyến | [submission-audit.json](performance/submission-audit.json): Git ignore, không tracked `.env`, đối chiếu protected files/AST với `ad29c55`, quét mẫu credential mà không in nội dung. |
-| GitHub / nộp lên hệ thống lớp | Kho nộp đã xác định | `origin`: `ducdh205/K4-DAY20-MULTIAGENTS-DinhHoangDuc-2A202602795`; kết quả push được báo riêng sau commit. Chưa có thông tin cổng nộp của lớp; xuất bản kho chưa đồng nghĩa hoàn thành thí nghiệm. |
+| Push GitHub | Đã thực hiện | Bản báo cáo Phần 6 tại commit `0047f33` đã push lên `origin/main`; `.env` không nằm trong lịch sử Git. |
+| Nộp lên hệ thống lớp | Chưa thực hiện | Chưa có URL/các trường của trang nộp; xuất bản kho chưa đồng nghĩa hoàn thành thí nghiệm hoặc đã bấm nộp trên hệ thống lớp. |
+
+## Liên kết dùng để nộp
+
+- [Kho mã nguồn](https://github.com/ducdh205/K4-DAY20-MULTIAGENTS-DinhHoangDuc-2A202602795).
+- [Báo cáo](https://github.com/ducdh205/K4-DAY20-MULTIAGENTS-DinhHoangDuc-2A202602795/blob/main/report/REPORT.md).
+- [Danh mục kết quả và vết](https://github.com/ducdh205/K4-DAY20-MULTIAGENTS-DinhHoangDuc-2A202602795/blob/main/report/RESULTS_INDEX.md).
+
+Mô tả tình trạng bài: đã triển khai harness/subagent/curator, 32 test gốc và 35 nhóm kiểm chứng bổ sung đạt; coverage 90,58%. Có 13 lượt Groq thật bị lỗi thực thi được lưu và phân tích. Benchmark ba điều kiện, skill thật, freeze và eval còn thiếu; báo cáo không khẳng định lab đã hoàn tất hay tự nhận điểm thưởng.
 
 ## Đối chiếu 10 nội dung trong checklist tham khảo
 
